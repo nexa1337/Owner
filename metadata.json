@@ -1,0 +1,7 @@
+{
+  "name": "Marouan Anouar Portfolio 02",
+  "description": "A modern, responsive personal portfolio & roadmap website for Marouan Anouar, a multi-passion digital creator.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

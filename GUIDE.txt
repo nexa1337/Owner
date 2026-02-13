@@ -1,0 +1,254 @@
+
+# NEXA 1337 PORTFOLIO - ULTIMATE COMMAND MANUAL
+
+Welcome, Administrator. This document is your control panel for the entire website. 
+Follow these instructions to modify content, manage the secret vault, and control security.
+
+================================================================================
+TABLE OF CONTENTS
+================================================================================
+1.  MASTER CONFIGURATION (Menu, Socials, Icons)
+2.  HOMEPAGE CONTROL (Bio, Avatar, Hero)
+3.  ROADMAP & CATEGORIES (Skills, Tools, Projects, Gaming)
+4.  WOLF CHAT BOT (Q&A Logic)
+5.  CONTACT PAGE (WhatsApp & Links)
+6.  SECRET VAULT: SECURITY (Changing the Password & Disclaimer)
+7.  SECRET VAULT: CONTENT (Google Sheets Backend)
+8.  SECRET VAULT: ADS (Banners & Revenue)
+9.  DEPLOYMENT (Going Online)
+10. TROUBLESHOOTING ("Failed to fetch" Errors)
+
+================================================================================
+1. MASTER CONFIGURATION (constants.tsx)
+================================================================================
+**File Location:** `constants.tsx`
+
+This file is the "Brain" of your site. It controls the Navigation menu and your Social Media links globally.
+
+*   **To change Social Media Links:**
+    Find `export const SOCIAL_LINKS`. Update the URLs inside the quotes.
+
+*   **To change Navigation Menu:**
+    Find `export const NAV_ITEMS`. You can change labels or icons here.
+    *Note: The 'Tool' item is set to `isExternal: true` to open in a new tab.*
+
+================================================================================
+2. HOMEPAGE CONTROL
+================================================================================
+**File Location:** `pages/Home.tsx`
+
+*   **Change Avatar Image:**
+    Search for `<img src="...`. Replace the URL inside `src=""` with your new image link.
+    *Tip: Use a square image hosted on Imgur, Blogger, or GitHub.*
+
+*   **Change Name & Title:**
+    Search for "Marouan Anouar" or "Own path, own rules" and edit the text directly.
+
+*   **Change Bio Text:**
+    Scroll down to the `div` containing the bio paragraphs (e.g., "I’m an interior designer...") and edit the text.
+
+================================================================================
+3. ROADMAP & CATEGORIES
+================================================================================
+**File Location:** `constants.tsx`
+
+All data for Architecture, IT, Gaming, and Business is stored in the `CATEGORIES` array.
+
+*   **To Edit a Category (e.g., Architecture):**
+    Find `id: 'architecture'`.
+    *   `tools`: Add/Remove tools. Icons are names from `components/Icon.tsx`.
+    *   `skills`: Change skill names and percentage levels (0-100).
+    *   `projects`: Add new projects to the gallery.
+    *   `roadmap`: Update your career timeline steps.
+
+*   **To Edit Gaming Data:**
+    Find `id: 'gaming'`.
+    *   `bestGames`: Update the list of games (Platform tabs), their cover images, and status (played/playing/backlog).
+    *   `resources`: Update the "Where I Learn From" links (e.g., Unreal Engine, Unity docs).
+    *   `gameDevToolsList`: Update the specific tools list (Free/Paid badges).
+    *   `gameBuildProcess`: Update the "How I Build Games" steps (Ideation, Prototyping, etc.).
+    *   `gamingMarketStats`: Update the growth and salary charts data.
+
+================================================================================
+4. WOLF CHAT BOT
+================================================================================
+**File Location:** `pages/Chat.tsx`
+
+This controls the "Wolf" chatbot Q&A.
+
+*   **To Change Questions/Answers:**
+    Look for `const STATIC_DATA`.
+    It is organized by sections:
+    *   `section1`: About Marouan
+    *   `section2`: NEXA 1337
+    *   `section3`: Architecture
+    *   `section4`: IT/Tech
+    *   `section5`: Gaming
+    *   `section6`: Wolf & Tools
+    *   `section7`: Secret Area (Instructions on how to access)
+    
+    Each question has `text` (the question) and `answer` (the reply) in 3 languages (EN, FR, AR).
+
+================================================================================
+5. CONTACT PAGE & BROKEN LINK REPORT
+================================================================================
+**File Locations:** `pages/Contact.tsx` and `pages/SecretArea.tsx`
+
+*   **Change WhatsApp Number:**
+    Search for `const phoneNumber = '...'` inside `pages/Contact.tsx`. 
+    Search for `const phoneNumber = '...'` inside `pages/SecretArea.tsx` (for broken link reports).
+    Change these to your number (include country code, no + sign).
+
+*   **Change Email Display:**
+    Search for `lesaffaires8@gmail.com` in `pages/Contact.tsx` and update it.
+
+================================================================================
+6. SECRET VAULT: SECURITY (MANAGE KEY)
+================================================================================
+**File Location:** `pages/SecretArea.tsx`
+
+**How to change the Secret Password:**
+
+1.  Open `pages/SecretArea.tsx`.
+2.  Search for the function `handleUnlock`.
+3.  Look for this line:
+    `if (password === 'Wolfspace') {`
+4.  Change `'Wolfspace'` to your new password.
+    *Example:* `if (password === 'MySecret123') {`
+
+**How to change the Notifications:**
+1.  Search for `useEffect` containing `setNotifications`.
+2.  Edit the text inside `title` and `text` for both English and Arabic alerts (Wolf detected messages).
+
+**Disclaimer Text:**
+1.  Search for `const DISCLAIMER_CONTENT`.
+2.  You can edit the warning text shown to users before they access the vault.
+
+================================================================================
+7. SECRET VAULT: CONTENT (BACKEND)
+================================================================================
+The content in the Secret Vault (Games, Software, etc.) is NOT in the code. It is pulled from a **Google Sheet**.
+
+**Step A: Setup Google Sheet**
+1.  Create a new Google Sheet.
+2.  Create 6 Tabs at the bottom named EXACTLY: `game`, `steamtools`, `architect`, `extra`, `upcoming`, `steamaccounts`.
+    *(Important: No spaces in 'steamaccounts')*
+
+**Step B: Add Content**
+*   **Tabs: `game`, `steamtools`, `architect`, `extra`** (Columns in Row 1):
+    `name`, `version`, `repackSize`, `originalSize`, `coverImage`, `description`, `requirements`, `steps`, `pinned`, `tools`, `full`, `part1`, `part2`, `mirror1`, `mirror2`, `trailer`, `gallery`, `tutorial`, `dlc`
+    
+    *Note on Requirements format:* `RAM: 16GB | GPU: RTX 3060`
+    *Note on Steps format:* `Step 1 | Step 2 | Step 3`
+    *Note on Pinned (Pin to Top):* Type `TRUE`, `ON`, or `YES` in the `pinned` column to pin the item.
+    *Note on Tools (Tools You Need):* Format: `Tool Name^https://link.com | Another Tool^https://link.com`
+    *Note on Gallery:* Pipe separated image links `http://img1.jpg | http://img2.jpg`.
+
+*   **Tab: `upcoming`** (Columns in Row 1):
+    `name`, `image`, `platform`, `price`
+
+*   **Tab: `steamaccounts`** (Columns in Row 1):
+    `username`, `password`, `games`, `status`
+    *Note on Status:* Type `Online` or `Offline`.
+
+**Step C: Connect Sheet to Website (Google Apps Script)**
+1.  In Google Sheet, go to **Extensions > Apps Script**.
+2.  Delete any code there.
+3.  Paste the **Script Code** below:
+    *(Copy carefully. Do NOT copy the word "javascript" or any backticks. Start from function doGet...)*
+
+function doGet() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheets = ss.getSheets();
+  var output = {};
+
+  for (var i = 0; i < sheets.length; i++) {
+    var sheet = sheets[i];
+    var name = sheet.getName().trim().toLowerCase();
+    
+    // Define which tabs to export (Added steamaccounts)
+    if (['game', 'steamtools', 'architect', 'extra', 'upcoming', 'steamaccounts'].indexOf(name) > -1) {
+      var data = sheet.getDataRange().getValues();
+      if (data.length > 1) {
+        var headers = data[0];
+        var rows = [];
+        
+        for (var r = 1; r < data.length; r++) {
+          var row = data[r];
+          var obj = {};
+          for (var h = 0; h < headers.length; h++) {
+            var headerName = headers[h].toString().trim();
+            if (headerName) {
+                obj[headerName] = row[h];
+            }
+          }
+          rows.push(obj);
+        }
+        output[name] = rows;
+      } else {
+        output[name] = [];
+      }
+    }
+  }
+
+  return ContentService.createTextOutput(JSON.stringify(output)).setMimeType(ContentService.MimeType.JSON);
+}
+
+4.  Click **Deploy** (Blue button) > **New Deployment**.
+5.  Select type: **Web App**.
+6.  Description: "Updated with Steam Accounts".
+7.  Execute as: **Me**.
+8.  Who has access: **Anyone** (Crucial!).
+9.  Click **Deploy**.
+10. Copy the **Web App URL** (ends in `/exec`).
+
+**Step D: Paste URL in Code**
+1.  Open `pages/SecretArea.tsx`.
+2.  Find `const API_ENDPOINT = '...';` near the top.
+3.  Paste your NEW Web App URL inside the quotes.
+
+================================================================================
+8. SECRET VAULT: ADS
+================================================================================
+**File Location:** `pages/SecretArea.tsx`
+
+You can control the ads shown in the Secret Area here.
+
+1.  Look for `const AD_CONFIG` near the top of the file.
+2.  Update the image links for `desktop` and `mobile`.
+3.  Update the `link` to where the user goes when they click.
+
+**Image Sizes:**
+*   **Desktop:** 970x250 px (Top/Bottom)
+*   **Mobile:** 320x100 px (Top/Bottom)
+
+================================================================================
+9. DEPLOYMENT (GOING ONLINE)
+================================================================================
+To update your live website on GitHub:
+
+1.  Open your project terminal.
+2.  Run these commands one by one:
+    `git add .`
+    `git commit -m "Update website content"`
+    `git push`
+3.  Wait 1-2 minutes. GitHub Pages will automatically update.
+
+================================================================================
+10. TROUBLESHOOTING
+================================================================================
+**ERROR: "Failed to fetch" or "Network Error"**
+
+If you see this error when trying to open the Secret Vault, it means the website cannot connect to your Google Sheet.
+
+**Reason 1: Incorrect Permission (Most Common)**
+*   When deploying the App Script, you MUST set "Who has access" to **"Anyone"**.
+*   If you set it to "Only me" or "Anyone with Google Account", the website will fail to fetch data.
+*   **Fix:** Go to Google Sheet > Extensions > Apps Script > Deploy > New Deployment > Set "Who has access" to "Anyone" > Deploy. Copy the NEW URL.
+
+**Reason 2: Incorrect URL**
+*   Every time you create a "New Deployment", you get a NEW URL.
+*   You must copy this new URL and paste it into `pages/SecretArea.tsx` (inside the `API_ENDPOINT` variable).
+*   If you forgot to update the code with the new URL, it will fail.
+
+**Good luck, Wolf.**

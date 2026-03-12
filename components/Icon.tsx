@@ -12,7 +12,8 @@ import {
   TbBrandLinkedin, TbBrandGithub, TbBrandX, TbBug, TbDatabase, TbRocket, TbHelp,
   TbBrandWindows, TbBrandXbox, TbBrandTiktok, TbSitemap, TbFaceId,
   TbUser, TbLock, TbKey, TbUsers, TbBrandDiscord, TbPin, TbAlertTriangle,
-  TbLoader, TbSend, TbCopy, TbGhost
+  TbLoader, TbSend, TbCopy, TbGhost, TbShoppingCart,
+  TbBold, TbItalic, TbList, TbCheckbox, TbGridDots, TbSearch, TbCalculator, TbBulb, TbSparkles, TbRefresh
 } from 'react-icons/tb';
 
 import {
@@ -69,6 +70,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Video: TbVideo,
   FileText: TbFileText,
   ShoppingBag: TbShoppingBag,
+  ShoppingCart: TbShoppingCart,
   BarChart: TbChartBar,
   Link: TbLink,
   Camera: TbCamera,
@@ -181,7 +183,17 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Aperture: TbCamera,
   Box: TbCode, 
   Orbit: TbWorld,
-  Workflow: TbSitemap
+  Workflow: TbSitemap,
+  Bold: TbBold,
+  Italic: TbItalic,
+  List: TbList,
+  CheckSquare: TbCheckbox,
+  Grid: TbGridDots,
+  Search: TbSearch,
+  Calculator: TbCalculator,
+  Bulb: TbBulb,
+  Sparkles: TbSparkles,
+  RefreshCw: TbRefresh
 };
 
 const Icon: React.FC<IconProps> = ({ name, size = 24, className }) => {

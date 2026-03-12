@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { NAV_ITEMS } from '../constants';
 import Icon from './Icon';
 
@@ -44,18 +45,50 @@ const BottomNav: React.FC = () => {
             );
           }
 
+          const isWolfChat = item.label === 'Wolf Chat';
+
           return (
             <Link 
               key={item.path} 
               to={item.path}
-              className={`flex flex-col items-center justify-center w-full h-full transition-colors ${
+              className={`flex flex-col items-center justify-center w-full h-full transition-colors group ${
                 isActive 
                   ? 'text-primary-600 dark:text-nexa-accent' 
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
-              <Icon name={item.iconName} size={24} className={isActive ? 'animate-bounce-subtle' : ''} />
-              <span className="text-[10px] mt-1 font-medium">{item.label}</span>
+              {isWolfChat ? (
+                <motion.div
+                  className="flex flex-col items-center justify-center relative"
+                  animate={{ 
+                    x: [0, -1, 1, -0.5, 0.5, 0],
+                    skewX: [0, 3, -3, 1, -1, 0],
+                  }}
+                  transition={{ 
+                    duration: 0.4, 
+                    repeat: Infinity, 
+                    repeatDelay: 4,
+                    repeatType: "mirror",
+                    ease: "easeInOut" 
+                  }}
+                >
+                  <div className="relative">
+                    <div className="absolute inset-0 text-red-500 translate-x-[1.5px] animate-pulse z-0"><Icon name={item.iconName} size={24} /></div>
+                    <div className="absolute inset-0 text-blue-500 -translate-x-[1.5px] animate-pulse animation-delay-75 z-0"><Icon name={item.iconName} size={24} /></div>
+                    <Icon name={item.iconName} size={24} className="relative z-10" />
+                  </div>
+                  <span className="text-[10px] mt-1 font-medium relative">
+                    <span className="absolute inset-0 text-red-500 translate-x-[1px] animate-pulse z-0">{item.label}</span>
+                    <span className="absolute inset-0 text-blue-500 -translate-x-[1px] animate-pulse animation-delay-75 z-0">{item.label}</span>
+                    <span className="relative z-10">{item.label}</span>
+                  </span>
+                </motion.div>
+              ) : (
+                <>
+                  <Icon name={item.iconName} size={24} className={isActive ? 'animate-bounce-subtle' : ''} />
+                  <span className="text-[10px] mt-1 font-medium">{item.label}</span>
+                </>
+              )}
             </Link>
           );
         })}

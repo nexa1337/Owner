@@ -57,7 +57,7 @@ const DISCLAIMER_CONTENT: Record<string, DisclaimerData> = {
   ES: {
     label: "Español",
     title: "⚠️ Aviso legal",
-    text: "Todo el contenido de este sitio ya está disponible públicamente en Internet.\nNo alojamos, modificamos ni crackeamos archivos. Solo compartimos enlaces públicos.\n\nRecomendamos comprar las versiones originales para apoyar a los desarrolladores.\nEl usuario es totalmente responsable del uso del contenido.",
+    text: "Todo el contenido de este sitio ya está disponible públicamente en Internet.\nNo alojamos, modificamos ni crackeamos archivos. Solo compartimos enlaces públicos.\n\nRecomendamos comprar las versions originales para apoyar a los desarrolladores.\nEl usuario es totalmente responsable del uso del contenido.",
     btn: "Entiendo"
   },
   RU: {
@@ -97,11 +97,13 @@ interface ResourceItem {
   systemReqs: Requirement[];
   installSteps: string[];
   isPinned: boolean;
+  isFree: boolean;
   toolsNeeded: { name: string; url: string }[];
   links: {
-    parts: { id: number, link: string }[];
-    mirrors: { id: number, link: string }[];
+    parts: { id: number, link: string, note?: string }[];
+    mirrors: { id: number, link: string, note?: string }[];
     full?: string;
+    fullNote?: string;
     tutorial?: string; 
     dlc?: string;
     trailer?: string;
@@ -265,7 +267,7 @@ const SteamAccountsModal: React.FC<{ open: boolean; onClose: () => void; account
             <motion.div 
                 initial={{ scale: 0.9, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
-                className="bg-[#171a21] w-[95%] md:w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl border border-[#2a475e] flex flex-col max-h-[85vh] sm:max-h-[85vh]"
+                className="bg-[#171a21] dark:bg-[#171a21] bg-white w-[95%] md:w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl border border-[#2a475e] dark:border-[#2a475e] border-slate-200 flex flex-col max-h-[85vh] sm:max-h-[85vh]"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Steam Header */}
@@ -286,78 +288,82 @@ const SteamAccountsModal: React.FC<{ open: boolean; onClose: () => void; account
                 </div>
                 
                 {/* List */}
-                <div className="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1 custom-scrollbar">
+                <div className="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1 custom-scrollbar bg-slate-50 dark:bg-[#171a21]">
                     {accounts.length === 0 ? (
                         <div className="text-center py-10 text-slate-500">
                             <Icon name="Ghost" size={40} className="mx-auto mb-3 opacity-50"/>
                             <p>No accounts available right now. Check back later!</p>
                         </div>
                     ) : (
-                        accounts.map((acc, idx) => (
-                            <div key={idx} className="bg-[#1b2838] border border-[#2a475e] rounded-xl p-4 sm:p-5 hover:border-[#66c0f4] transition-colors group shadow-lg relative">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-[#2a475e] to-[#171a21] rounded-full flex items-center justify-center text-[#66c0f4] font-bold text-xs sm:text-sm">
-                                            {idx + 1}
+                        accounts.map((acc, idx) => {
+                            const statusRaw = acc.status?.toString().trim();
+                            const isOffline = statusRaw.toLowerCase() === 'offline';
+                            return (
+                                <div key={idx} className="bg-white dark:bg-[#1b2838] border border-slate-200 dark:border-[#2a475e] rounded-xl p-4 sm:p-5 hover:border-[#66c0f4] transition-colors group shadow-lg relative">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-[#2a475e] dark:to-[#171a21] rounded-full flex items-center justify-center text-[#66c0f4] font-bold text-xs sm:text-sm">
+                                                {idx + 1}
+                                            </div>
+                                        </div>
+                                        {/* Status Badge */}
+                                        <div className={`text-[9px] sm:text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider border ${
+                                            isOffline 
+                                            ? 'bg-red-500/10 text-red-500 dark:text-red-400 border-red-500/20' 
+                                            : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                                        }`}>
+                                            {statusRaw || 'ONLINE'}
                                         </div>
                                     </div>
-                                    {/* Status Badge */}
-                                    <div className={`text-[9px] sm:text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider border ${
-                                        acc.status === 'Offline' 
-                                        ? 'bg-red-500/10 text-red-400 border-red-500/20' 
-                                        : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                    }`}>
-                                        {acc.status || 'ONLINE'}
-                                    </div>
-                                </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4">
-                                    <div className="space-y-1">
-                                        <label className="text-[9px] sm:text-[10px] font-bold text-[#8f98a0] uppercase tracking-wider">Username</label>
-                                        <div className="flex items-center gap-2 bg-[#171a21] p-2 rounded border border-[#2a475e] group-hover:border-[#66c0f4]/50 transition-colors">
-                                            <span className="text-xs sm:text-sm font-mono text-white truncate flex-1 select-all">{acc.username}</span>
-                                            <button 
-                                                onClick={() => handleCopy(acc.username, idx, 'user')}
-                                                className="text-[#66c0f4] hover:text-white p-1.5 rounded hover:bg-[#66c0f4]/20 transition-all shrink-0"
-                                                title="Copy Username"
-                                            >
-                                                {copiedIndex?.idx === idx && copiedIndex.type === 'user' ? <Icon name="Check" size={14} className="text-emerald-400" /> : <Icon name="Copy" size={14} />}
-                                            </button>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4">
+                                        <div className="space-y-1">
+                                            <label className="text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-[#8f98a0] uppercase tracking-wider">Username</label>
+                                            <div className="flex items-center gap-2 bg-slate-50 dark:bg-[#171a21] p-2 rounded border border-slate-200 dark:border-[#2a475e] group-hover:border-[#66c0f4]/50 transition-colors">
+                                                <span className="text-xs sm:text-sm font-mono text-slate-900 dark:text-white truncate flex-1 select-all">{acc.username}</span>
+                                                <button 
+                                                    onClick={() => handleCopy(acc.username, idx, 'user')}
+                                                    className="text-[#66c0f4] hover:text-blue-600 dark:hover:text-white p-1.5 rounded hover:bg-[#66c0f4]/20 transition-all shrink-0"
+                                                    title="Copy Username"
+                                                >
+                                                    {copiedIndex?.idx === idx && copiedIndex.type === 'user' ? <Icon name="Check" size={14} className="text-emerald-500 dark:text-emerald-400" /> : <Icon name="Copy" size={14} />}
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-[#8f98a0] uppercase tracking-wider">Password</label>
+                                            <div className="flex items-center gap-2 bg-slate-50 dark:bg-[#171a21] p-2 rounded border border-slate-200 dark:border-[#2a475e] group-hover:border-[#66c0f4]/50 transition-colors">
+                                                <span className="text-xs sm:text-sm font-mono text-slate-900 dark:text-white truncate flex-1 select-all">{acc.password}</span>
+                                                <button 
+                                                    onClick={() => handleCopy(acc.password, idx, 'pass')}
+                                                    className="text-[#66c0f4] hover:text-blue-600 dark:hover:text-white p-1.5 rounded hover:bg-[#66c0f4]/20 transition-all shrink-0"
+                                                    title="Copy Password"
+                                                >
+                                                    {copiedIndex?.idx === idx && copiedIndex.type === 'pass' ? <Icon name="Check" size={14} className="text-emerald-500 dark:text-emerald-400" /> : <Icon name="Copy" size={14} />}
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="space-y-1">
-                                        <label className="text-[9px] sm:text-[10px] font-bold text-[#8f98a0] uppercase tracking-wider">Password</label>
-                                        <div className="flex items-center gap-2 bg-[#171a21] p-2 rounded border border-[#2a475e] group-hover:border-[#66c0f4]/50 transition-colors">
-                                            <span className="text-xs sm:text-sm font-mono text-white truncate flex-1 select-all">{acc.password}</span>
-                                            <button 
-                                                onClick={() => handleCopy(acc.password, idx, 'pass')}
-                                                className="text-[#66c0f4] hover:text-white p-1.5 rounded hover:bg-[#66c0f4]/20 transition-all shrink-0"
-                                                title="Copy Password"
-                                            >
-                                                {copiedIndex?.idx === idx && copiedIndex.type === 'pass' ? <Icon name="Check" size={14} className="text-emerald-400" /> : <Icon name="Copy" size={14} />}
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
 
-                                {acc.games && (
-                                    <div className="pt-3 border-t border-[#2a475e]/50">
-                                        <div className="flex items-start gap-2">
-                                            <Icon name="DeviceGamepad2" size={16} className="text-[#8f98a0] mt-0.5 shrink-0" />
-                                            <p className="text-[10px] sm:text-xs text-[#c5c3c0] leading-relaxed line-clamp-2 sm:line-clamp-none">
-                                                <span className="text-[#8f98a0] font-bold">Includes: </span>
-                                                {acc.games}
-                                            </p>
+                                    {acc.games && (
+                                        <div className="pt-3 border-t border-slate-100 dark:border-[#2a475e]/50">
+                                            <div className="flex items-start gap-2">
+                                                <Icon name="DeviceGamepad2" size={16} className="text-slate-400 dark:text-[#8f98a0] mt-0.5 shrink-0" />
+                                                <p className="text-[10px] sm:text-xs text-slate-600 dark:text-[#c5c3c0] leading-relaxed line-clamp-2 sm:line-clamp-none">
+                                                    <span className="text-slate-500 dark:text-[#8f98a0] font-bold">Includes: </span>
+                                                    {acc.games}
+                                                </p>
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
-                            </div>
-                        ))
+                                    )}
+                                </div>
+                            );
+                        })
                     )}
                 </div>
                 
-                <div className="p-3 sm:p-4 bg-[#171a21] border-t border-[#2a475e] text-center shrink-0">
-                    <p className="text-[9px] sm:text-[10px] text-[#8f98a0]">
+                <div className="p-3 sm:p-4 bg-slate-100 dark:bg-[#171a21] border-t border-slate-200 dark:border-[#2a475e] text-center shrink-0">
+                    <p className="text-[9px] sm:text-[10px] text-slate-500 dark:text-[#8f98a0]">
                         Please do not change passwords. These are community accounts.
                     </p>
                 </div>
@@ -633,6 +639,150 @@ const GameCarousel: React.FC<{ games: UpcomingGame[], loading: boolean, errorSta
     );
 };
 
+const RecentProductsCarousel: React.FC<{ items: ResourceItem[], loading: boolean, onSelect: (item: ResourceItem) => void }> = ({ items, loading, onSelect }) => {
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [itemsPerView, setItemsPerView] = useState(5);
+    const [isHovered, setIsHovered] = useState(false);
+    const touchStartX = useRef(0);
+    const touchEndX = useRef(0);
+
+    useEffect(() => {
+        setCurrentIndex(0);
+    }, [items]);
+
+    useEffect(() => {
+        const handleResize = () => {
+            const w = window.innerWidth;
+            if (w < 640) setItemsPerView(1.2); 
+            else if (w < 768) setItemsPerView(2.2); 
+            else if (w < 1024) setItemsPerView(3.2); 
+            else if (w < 1280) setItemsPerView(4.2); 
+            else setItemsPerView(5); 
+        };
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    useEffect(() => {
+        if (isHovered || items.length === 0) return;
+        const interval = setInterval(() => {
+            handleNext();
+        }, 3000);
+        return () => clearInterval(interval);
+    }, [currentIndex, isHovered, items.length, itemsPerView]);
+
+    const handleNext = () => {
+        setCurrentIndex((prev) => {
+            const maxIndex = items.length - Math.floor(itemsPerView);
+            return prev >= maxIndex ? 0 : prev + 1;
+        });
+    };
+
+    const handlePrev = () => {
+        setCurrentIndex((prev) => {
+            const maxIndex = items.length - Math.floor(itemsPerView);
+            return prev <= 0 ? maxIndex : prev - 1;
+        });
+    };
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        touchStartX.current = e.targetTouches[0].clientX;
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        touchEndX.current = e.targetTouches[0].clientX;
+    };
+
+    const handleTouchEnd = () => {
+        if (touchStartX.current - touchEndX.current > 50) handleNext();
+        if (touchStartX.current - touchEndX.current < -50) handlePrev();
+    };
+
+    if (loading && items.length === 0) {
+        return (
+            <div className="w-full h-40 flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-900 text-slate-400 rounded-2xl">
+                <Icon name="Database" size={32} className="mb-2 opacity-50 animate-pulse" />
+                <span className="text-xs font-bold uppercase tracking-widest">Loading Recent Products...</span>
+            </div>
+        );
+    }
+
+    if (items.length === 0) {
+        return null;
+    }
+
+    return (
+        <div 
+            className="relative w-full group select-none"
+            onMouseEnter={() => setIsHovered(true)} 
+            onMouseLeave={() => setIsHovered(false)}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+        >
+            <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
+                <motion.div 
+                    className="flex"
+                    animate={{ x: `-${currentIndex * (100 / itemsPerView)}%` }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                >
+                    {items.map((item, idx) => (
+                        <div 
+                            key={`${item.id}-${idx}`}
+                            style={{ width: `${100 / itemsPerView}%` }}
+                            className="flex-shrink-0 p-1"
+                        >
+                            <div 
+                                onClick={() => onSelect(item)}
+                                className="relative aspect-[3/4] bg-slate-200 dark:bg-slate-900 rounded-xl overflow-hidden group/card shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer"
+                            >
+                                <img 
+                                    src={item.coverImage} 
+                                    alt={item.name} 
+                                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-110"
+                                    loading="lazy"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover/card:opacity-90 transition-opacity"></div>
+                                
+                                {item.isFree && (
+                                    <div className="absolute top-2 right-2 px-2 py-1 bg-emerald-500 text-white rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1 z-20">
+                                        <Icon name="Tag" size={10} /> Free
+                                    </div>
+                                )}
+                                <div className="absolute top-2 left-2 px-2 py-1 bg-primary-600 text-white rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg z-20">
+                                    {item.category === 'steamtools' ? 'STEAMTOOLS' : item.category.toUpperCase()}
+                                </div>
+
+                                <div className="absolute bottom-0 left-0 right-0 p-3 z-20">
+                                    <h3 className="font-black text-xs md:text-sm text-white leading-tight line-clamp-2 drop-shadow-md group-hover/card:text-primary-400 transition-colors">
+                                        {item.name}
+                                    </h3>
+                                    <div className="mt-1 flex justify-between items-center">
+                                        <span className="font-mono font-bold text-slate-300 text-[10px] drop-shadow-md bg-black/40 px-1.5 rounded">
+                                            {item.version}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </motion.div>
+            </div>
+            <div className="absolute top-1/2 -translate-y-1/2 left-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:block">
+                <button onClick={handlePrev} className="p-2 rounded-full bg-white/90 dark:bg-black/90 text-slate-900 dark:text-white shadow-lg hover:scale-110 transition-transform">
+                    <Icon name="ChevronLeft" size={20} />
+                </button>
+            </div>
+            <div className="absolute top-1/2 -translate-y-1/2 right-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:block">
+                <button onClick={handleNext} className="p-2 rounded-full bg-white/90 dark:bg-black/90 text-slate-900 dark:text-white shadow-lg hover:scale-110 transition-transform">
+                    <Icon name="ChevronRight" size={20} />
+                </button>
+            </div>
+        </div>
+    );
+};
+
 const ResourceDetailModal: React.FC<{ 
   item: ResourceItem; 
   onClose: () => void;
@@ -769,7 +919,7 @@ const ResourceDetailModal: React.FC<{
                   <Badge text={isSteamTool ? 'STEAMTOOLS' : item.category} color="blue" icon={isSteamTool ? 'BrandSteam' : 'Folder'} />
                   {!isSteamTool && <Badge text={item.version} color="slate" icon="Code" />}
                   {isSteamTool && item.gameId && <Badge text={`ID: ${item.gameId}`} color="slate" icon="Hash" />}
-                  {!isSteamTool && item.repackBy && <Badge text={`REPACK: ${item.repackBy.toUpperCase()}`} color="emerald" icon="Box" />}
+                  {!isSteamTool && item.category !== 'architect' && item.repackBy && <Badge text={`REPACK: ${item.repackBy.toUpperCase()}`} color="emerald" icon="Box" />}
                </div>
                <h2 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white leading-none tracking-tight uppercase italic">{item.name}</h2>
                {item.genres && (
@@ -924,15 +1074,16 @@ const ResourceDetailModal: React.FC<{
                 )}
 
                 <Section title="Download Channels">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                         {item.links.full && (
-                            <a href={item.links.full} target="_blank" rel="noreferrer" className="col-span-1 sm:col-span-2 group relative overflow-hidden bg-gradient-to-r from-primary-600 to-primary-500 p-4 sm:p-5 rounded-xl shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40 transition-all hover:-translate-y-1 active:scale-95">
+                            <a href={item.links.full} target="_blank" rel="noreferrer" className="col-span-1 md:col-span-2 group relative overflow-hidden bg-gradient-to-r from-primary-600 to-primary-500 p-4 sm:p-5 rounded-xl shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40 transition-all hover:-translate-y-1 active:scale-95">
                                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
                                 <div className="relative z-10 flex items-center justify-center gap-3 sm:gap-4">
                                     <div className="p-2 bg-white/10 rounded-full backdrop-blur-sm"><Icon name="Download" size={20} className="text-white sm:w-6 sm:h-6 animate-bounce" /></div>
                                     <div className="text-left sm:text-center">
                                         <div className="text-[10px] font-black text-primary-100 uppercase tracking-[0.2em] opacity-80">Master File</div>
-                                        <div className="text-sm sm:text-lg font-black text-white uppercase tracking-wider leading-none">Execute Download</div>
+                                        <div className="text-sm sm:text-lg font-black text-white uppercase tracking-wider leading-none">Full Project ({item.repackSize})</div>
+                                        {item.links.fullNote && <div className="text-[10px] text-white/80 font-bold mt-1">{item.links.fullNote}</div>}
                                     </div>
                                 </div>
                             </a>
@@ -944,8 +1095,15 @@ const ResourceDetailModal: React.FC<{
                                 sub="Primary Server" 
                                 href={part.link} 
                                 icon="Server" 
+                                note={part.note}
                             />
                         ))}
+                        {item.links.parts.length === 0 && !item.links.full && (
+                            <div className="col-span-1 md:col-span-2 p-6 bg-slate-100 dark:bg-slate-950 rounded-xl border border-dashed border-slate-300 dark:border-slate-800 text-center">
+                                <Icon name="Loader" size={24} className="animate-spin mx-auto mb-2 text-slate-400" />
+                                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Awaiting Encryption Keys...</p>
+                            </div>
+                        )}
                         {item.links.mirrors.map(mirror => (
                             <DownloadButton 
                                 key={`mirror-${mirror.id}`}
@@ -954,6 +1112,7 @@ const ResourceDetailModal: React.FC<{
                                 href={mirror.link} 
                                 icon="Database" 
                                 secondary 
+                                note={mirror.note}
                             />
                         ))}
                     </div>
@@ -1021,7 +1180,7 @@ const Thumbnail: React.FC<{ src: string; isActive: boolean; onClick: () => void 
   </button>
 );
 
-const DownloadButton: React.FC<{ label: string; sub: string; href: string; icon: string; secondary?: boolean }> = ({ label, sub, href, icon, secondary }) => (
+const DownloadButton: React.FC<{ label: string; sub: string; href: string; icon: string; secondary?: boolean; note?: string }> = ({ label, sub, href, icon, secondary, note }) => (
   <a href={href} target="_blank" rel="noreferrer" className={`group flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl border transition-all active:scale-95 hover:-translate-y-1 ${secondary ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-900 dark:hover:text-white' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 hover:border-primary-500/50 hover:text-primary-600 dark:hover:text-white'}`}>
      <div className={`p-2 sm:p-2.5 rounded-lg shrink-0 transition-colors ${secondary ? 'bg-slate-100 dark:bg-slate-950 text-slate-500 group-hover:text-slate-800 dark:group-hover:text-slate-300' : 'bg-slate-200 dark:bg-slate-900 text-primary-600 dark:text-primary-500 group-hover:text-white group-hover:bg-primary-500'}`}>
         <Icon name={icon} size={20} />
@@ -1029,6 +1188,7 @@ const DownloadButton: React.FC<{ label: string; sub: string; href: string; icon:
      <div className="min-w-0 flex-1">
         <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest opacity-60 mb-0.5">{sub}</div>
         <div className="text-xs sm:text-sm font-bold truncate">{label}</div>
+        {note && <div className="text-[10px] text-emerald-500 font-bold mt-1 truncate">{note}</div>}
      </div>
      <Icon name="ExternalLink" size={14} className="ml-auto opacity-50 sm:opacity-0 group-hover:opacity-100 transition-opacity" />
   </a>
@@ -1058,6 +1218,16 @@ const SecretArea: React.FC = () => {
   
   // Steam Accounts Feature
   const [steamAccounts, setSteamAccounts] = useState<SteamAccount[]>([]);
+
+  const recentProducts = useMemo(() => {
+    const recent: ResourceItem[] = [];
+    ['game', 'steamtools', 'architect', 'extra'].forEach(cat => {
+        const items = allResources[cat] || [];
+        const catRecent = [...items].reverse().slice(0, 10);
+        recent.push(...catRecent);
+    });
+    return recent;
+  }, [allResources]);
   const [showSteamModal, setShowSteamModal] = useState(false);
 
   // Math Game State
@@ -1287,10 +1457,23 @@ const SecretArea: React.FC = () => {
          setUpcomingGames([]);
       }
 
-      // Handle Steam Accounts
+      // Handle Steam Accounts with robust header normalization
       const steamKey = Object.keys(data).find(k => k.toLowerCase() === 'steamaccounts');
       if (steamKey && Array.isArray(data[steamKey])) {
-          setSteamAccounts(data[steamKey]);
+          setSteamAccounts(data[steamKey].map((raw: any) => {
+              // Extract values by checking keys that start with the intended name
+              const findByPrefix = (prefix: string) => {
+                  const key = Object.keys(raw).find(k => k.toLowerCase().trim().startsWith(prefix.toLowerCase()));
+                  return key ? raw[key] : undefined;
+              };
+
+              return {
+                  username: findByPrefix('username') || '',
+                  password: findByPrefix('password') || '',
+                  games: findByPrefix('games') || '',
+                  status: findByPrefix('status') || 'Online'
+              };
+          }));
       } else {
           setSteamAccounts([]);
       }
@@ -1306,7 +1489,11 @@ const SecretArea: React.FC = () => {
 
         if (transformed.hasOwnProperty(normalizedKey)) {
           transformed[normalizedKey] = data[tabKey].map((row: any, idx: number) => {
-            const reqs = (row.requirements || '').split('|').map((s: string) => {
+            // Robust access: check both lower and original casing
+            const getVal = (key: string) => row[key] || row[key.charAt(0).toUpperCase() + key.slice(1)] || '';
+            
+            const reqsStr = getVal('requirements');
+            const reqs = (reqsStr || '').toString().split('|').map((s: string) => {
               const parts = s.split(':');
               return { 
                 label: parts[0]?.trim() || 'Info', 
@@ -1316,49 +1503,97 @@ const SecretArea: React.FC = () => {
               };
             }).filter((r: any) => r.value && r.value !== 'N/A');
 
-            const steps = (row.steps || '').split('|').map((s: string) => s.trim()).filter((s: string) => s);
-            const gallery = (row.gallery || '').split('|').map((s: string) => s.trim()).filter((s: string) => s && s.startsWith('http'));
-            const toolsParsed = (row.tools || '').toString().split('|').map((s: string) => {
+            const steps = (getVal('steps') || '').toString().split('|').map((s: string) => s.trim()).filter((s: string) => s);
+            const gallery = (getVal('gallery') || '').toString().split('|').map((s: string) => s.trim()).filter((s: string) => s && s.startsWith('http'));
+            const toolsParsed = (getVal('tools') || '').toString().split('|').map((s: string) => {
                 const parts = s.split('^');
                 return { name: parts[0]?.trim(), url: parts[1]?.trim() };
             }).filter((t: any) => t.name && t.url);
 
-            const parts: { id: number, link: string }[] = [];
-            const mirrors: { id: number, link: string }[] = [];
+            const partsArr: { id: number, link: string, note?: string }[] = [];
+            const mirrorsArr: { id: number, link: string, note?: string }[] = [];
             for (let i = 1; i <= 20; i++) {
-                if (row[`part${i}`]) parts.push({ id: i, link: row[`part${i}`] });
-                if (row[`mirror${i}`]) mirrors.push({ id: i, link: row[`mirror${i}`] });
+                let pVal = getVal(`part${i}`);
+                let pNote = getVal(`partNote${i}`) || getVal(`note${i}`);
+                
+                // Helper to extract note from link string
+                const extractNote = (val: string) => {
+                    if (!val) return { link: '', note: '' };
+                    
+                    // Format: Link | Note
+                    if (val.includes('|')) {
+                        const parts = val.split('|');
+                        return { link: parts[0].trim(), note: parts[1].trim() };
+                    }
+                    
+                    // Format: Link "Note"
+                    const quoteMatch = val.match(/^(.*)\s+"([^"]+)"$/);
+                    if (quoteMatch) {
+                        return { link: quoteMatch[1].trim(), note: quoteMatch[2].trim() };
+                    }
+
+                    // Format: Link (Note)
+                    const parenMatch = val.match(/^(.*)\s+\(([^)]+)\)$/);
+                    if (parenMatch) {
+                        return { link: parenMatch[1].trim(), note: parenMatch[2].trim() };
+                    }
+
+                    return { link: val.trim(), note: '' };
+                };
+
+                if (pVal) {
+                    const extracted = extractNote(pVal);
+                    pVal = extracted.link;
+                    if (extracted.note) pNote = extracted.note;
+                }
+
+                let mVal = getVal(`mirror${i}`);
+                let mNote = getVal(`mirrorNote${i}`);
+
+                if (mVal) {
+                    const extracted = extractNote(mVal);
+                    mVal = extracted.link;
+                    if (extracted.note) mNote = extracted.note;
+                }
+
+                if (pVal) partsArr.push({ id: i, link: pVal, note: pNote });
+                if (mVal) mirrorsArr.push({ id: i, link: mVal, note: mNote });
             }
+
+            const isPinnedRaw = getVal('pinned');
+            const isFreeRaw = getVal('price') || getVal('isfree') || getVal('free');
 
             return {
               id: `${idPrefix}${row.id || (idx + 1)}`,
               category: normalizedKey,
-              name: row.name || 'Secure Fragment',
-              version: row.version || 'v1.0',
-              repackSize: row.repackSize || 'N/A',
-              originalSize: row.originalSize || 'N/A',
-              genres: row.genres || '',
-              languages: row.languages || 'ENG',
-              repackBy: row.repackBy || 'NEXA',
-              coverImage: row.coverImage || 'https://placehold.co/600x800/0f172a/334155?text=ENCRYPTED',
+              name: getVal('name') || 'Secure Fragment',
+              version: getVal('version') || 'v1.0',
+              repackSize: getVal('repackSize') || 'N/A',
+              originalSize: getVal('originalSize') || 'N/A',
+              genres: getVal('genres') || '',
+              languages: getVal('languages') || 'ENG',
+              repackBy: getVal('repackBy') || 'NEXA',
+              coverImage: getVal('coverImage') || 'https://placehold.co/600x800/0f172a/334155?text=ENCRYPTED',
               galleryImages: gallery,
-              description: row.description || 'No intel available.',
-              gameId: row.gameId || '',
-              ratingPositive: row.ratingPositive || '',
-              ratingNegative: row.ratingNegative || '',
-              hasDenuvo: String(row.denuvo).toLowerCase() === 'true',
-              hasExternalLauncher: String(row.launcher).toLowerCase() === 'true',
+              description: getVal('description') || 'No intel available.',
+              gameId: getVal('gameId') || '',
+              ratingPositive: getVal('ratingPositive') || '',
+              ratingNegative: getVal('ratingNegative') || '',
+              hasDenuvo: String(getVal('denuvo')).toLowerCase() === 'true',
+              hasExternalLauncher: String(getVal('launcher')).toLowerCase() === 'true',
               systemReqs: reqs,
               installSteps: steps,
-              isPinned: String(row.pinned).toLowerCase() === 'true' || String(row.pinned).toLowerCase() === 'yes' || String(row.pinned).toLowerCase() === 'on',
+              isPinned: String(isPinnedRaw).toLowerCase() === 'true' || String(isPinnedRaw).toLowerCase() === 'yes' || String(isPinnedRaw).toLowerCase() === 'on',
+              isFree: String(isFreeRaw).toLowerCase() === 'true' || String(isFreeRaw).toLowerCase() === 'yes' || String(isFreeRaw).toLowerCase() === 'free' || String(isFreeRaw) === '0',
               toolsNeeded: toolsParsed,
               links: { 
-                parts,
-                mirrors,
-                full: row.full, 
-                tutorial: row.tutorial, 
-                dlc: row.dlc, 
-                trailer: row.trailer
+                parts: partsArr,
+                mirrors: mirrorsArr,
+                full: getVal('full'), 
+                fullNote: getVal('fullNote') || getVal('note'),
+                tutorial: getVal('tutorial'), 
+                dlc: getVal('dlc'), 
+                trailer: getVal('trailer')
               }
             };
           });
@@ -1561,7 +1796,7 @@ const SecretArea: React.FC = () => {
                                 <span className="block text-[10px] uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-1">Secret Key</span>
                                 <span className="font-mono text-lg sm:text-xl font-black text-emerald-600 dark:text-emerald-400 select-all">Wolfspace</span>
                             </div>
-                            <button onClick={copyAndCloseMath} className="w-full py-3 sm:py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 text-xs sm:text-sm">
+                            <button onClick={copyAndCloseMath} className="w-full py-3 sm:py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold uppercase tracking-widest rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 text-xs sm:text-sm">
                                 <Icon name="Copy" size={18} /> Copy & Enter
                             </button>
                         </motion.div>
@@ -1728,8 +1963,29 @@ const SecretArea: React.FC = () => {
                </div>
             </div>
             
-            <h1 className="text-5xl md:text-7xl font-black text-slate-900 dark:text-white tracking-tighter leading-none uppercase italic">
-              Secret <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-cyan-300">Vault</span>
+            <h1 className="text-5xl md:text-7xl font-black text-slate-900 dark:text-white tracking-tighter leading-none uppercase italic relative">
+              Secret 
+              <motion.span 
+                className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-cyan-300 inline-block ml-2"
+                animate={{
+                  textShadow: [
+                    "0px 0px 0px transparent",
+                    "2px 0px 0px rgba(255,0,0,0.8), -2px 0px 0px rgba(0,0,255,0.8)",
+                    "0px 0px 0px transparent"
+                  ],
+                  x: [0, -2, 2, 0],
+                  skewX: [0, 10, -10, 0]
+                }}
+                transition={{
+                  duration: 0.25,
+                  repeat: Infinity,
+                  repeatDelay: 4,
+                  repeatType: "mirror",
+                  ease: "easeInOut"
+                }}
+              >
+                Vault
+              </motion.span>
             </h1>
             <p className="text-slate-500 dark:text-slate-400 max-w-xl text-sm md:text-base font-medium leading-relaxed border-l-2 border-slate-300 dark:border-slate-800 pl-4">
               Access high-tier digital assets, exclusive repacks, and premium architectural resources. 
@@ -1809,6 +2065,27 @@ const SecretArea: React.FC = () => {
             />
         </div>
 
+        <section className="mb-16">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-6">
+             <div className="flex items-center gap-3">
+                <div className="p-2 bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-lg shadow-lg shadow-emerald-500/20 text-white">
+                    <Icon name="Sparkles" size={20} />
+                </div>
+                <h2 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter">
+                    Recent <span className="text-emerald-500">Products</span>
+                </h2>
+             </div>
+          </div>
+          
+          <div className="relative">
+             <RecentProductsCarousel 
+                items={recentProducts} 
+                loading={loading}
+                onSelect={setSelectedResource}
+             />
+          </div>
+        </section>
+
         <div className="sticky top-20 z-40 mb-10">
            <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-800 p-2 rounded-2xl shadow-2xl flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between transition-all">
               
@@ -1841,6 +2118,14 @@ const SecretArea: React.FC = () => {
                     />
                   </div>
                   
+                  <button 
+                    onClick={fetchData}
+                    className="flex items-center justify-center p-3.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-all shrink-0"
+                    title="Reload Data"
+                  >
+                    <Icon name="RefreshCw" size={20} className={loading ? "animate-spin" : ""} />
+                  </button>
+
                   <button 
                     onClick={() => {
                         setRequestModalInitialTitle(searchQuery);
@@ -1886,60 +2171,66 @@ const SecretArea: React.FC = () => {
             <div className="space-y-12">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {paginatedData.map((item, idx) => (
-                  <motion.div 
-                      layout
-                      key={item.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.05 }}
-                      whileHover={{ y: -8, transition: { duration: 0.2 } }}
-                      className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden cursor-pointer hover:shadow-2xl hover:shadow-primary-900/10 hover:border-primary-500/30 transition-all relative"
-                      onClick={() => setSelectedResource(item)}
-                  >
-                      <div className="aspect-[3/4] relative overflow-hidden bg-slate-100 dark:bg-slate-950">
-                        <img src={item.coverImage} alt={item.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-90 group-hover:opacity-100" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent opacity-90"></div>
-                        {item.isPinned && (
-                            <div className="absolute top-3 left-3 z-20">
-                                <div className="bg-yellow-500 text-white p-1.5 rounded-lg shadow-lg border border-white/20">
-                                    <Icon name="Pin" size={16} />
+                      <motion.div 
+                          layout
+                          key={item.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: idx * 0.05 }}
+                          whileHover={{ y: -8, transition: { duration: 0.2 } }}
+                          className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden cursor-pointer hover:shadow-2xl hover:shadow-primary-900/10 hover:border-primary-500/30 transition-all relative flex flex-col"
+                          onClick={() => setSelectedResource(item)}
+                      >
+                          <div className="aspect-[3/4] relative overflow-hidden bg-slate-100 dark:bg-slate-950">
+                            <img src={item.coverImage} alt={item.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-90 group-hover:opacity-100" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent opacity-90"></div>
+                            {item.isPinned && (
+                                <div className="absolute top-3 left-3 z-20">
+                                    <div className="bg-yellow-500 text-white p-1.5 rounded-lg shadow-lg border border-white/20">
+                                        <Icon name="Pin" size={16} />
+                                    </div>
+                                </div>
+                            )}
+                            {item.category === 'steamtools' ? (
+                                <>
+                                    {item.gameId && (
+                                        <div className="absolute top-3 right-3 px-2 py-1 bg-black/60 backdrop-blur-md rounded-md border border-white/10 text-[10px] font-mono font-bold text-white shadow-sm">
+                                            ID: {item.gameId}
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="absolute top-3 right-3 px-2 py-1 bg-white/90 dark:bg-black/60 backdrop-blur-md rounded-md border border-slate-200 dark:border-white/10 text-[10px] font-mono font-bold text-primary-600 dark:text-primary-400">
+                                    {item.repackSize}
+                                </div>
+                            )}
+                            <div className={`absolute top-3 ${item.isPinned ? 'left-12' : 'left-3'} px-2 py-1 bg-primary-600 text-white rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg transition-all`}>
+                              {item.id}
+                            </div>
+                            {item.isFree && (
+                                <div className="absolute top-10 right-3 px-2 py-1 bg-emerald-500 text-white rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1 z-20">
+                                    <Icon name="Tag" size={12} /> Free
+                                </div>
+                            )}
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-30">
+                               <div className="w-12 h-12 bg-primary-500 rounded-full flex items-center justify-center text-white shadow-[0_0_20px_rgba(14,165,233,0.5)] transform scale-50 group-hover:scale-100 transition-transform duration-300">
+                                  <Icon name="ArrowRight" size={24} />
+                               </div>
+                            </div>
+                            
+                            <div className="absolute bottom-0 left-0 right-0 p-5 z-20">
+                                <h3 className="font-black text-lg text-white leading-tight uppercase italic mb-2 line-clamp-2 group-hover:text-primary-400 transition-colors drop-shadow-md">
+                                  {item.name}
+                                </h3>
+                                <div className="flex items-center justify-between border-t border-white/20 pt-3 mt-1">
+                                  <span className="text-[10px] text-slate-200 font-mono font-bold bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded border border-white/10">{item.version}</span>
+                                  <span className="text-[10px] font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1 drop-shadow-sm">
+                                     Details <Icon name="ChevronRight" size={12} />
+                                  </span>
                                 </div>
                             </div>
-                        )}
-                        {item.category === 'steamtools' ? (
-                            <>
-                                {item.gameId && (
-                                    <div className="absolute top-3 right-3 px-2 py-1 bg-black/60 backdrop-blur-md rounded-md border border-white/10 text-[10px] font-mono font-bold text-white shadow-sm">
-                                        ID: {item.gameId}
-                                    </div>
-                                )}
-                            </>
-                        ) : (
-                            <div className="absolute top-3 right-3 px-2 py-1 bg-white/90 dark:bg-black/60 backdrop-blur-md rounded-md border border-slate-200 dark:border-white/10 text-[10px] font-mono font-bold text-primary-600 dark:text-primary-400">
-                                {item.repackSize}
-                            </div>
-                        )}
-                        <div className={`absolute top-3 ${item.isPinned ? 'left-12' : 'left-3'} px-2 py-1 bg-primary-600 text-white rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg transition-all`}>
-                          {item.id}
-                        </div>
-                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                           <div className="w-12 h-12 bg-primary-500 rounded-full flex items-center justify-center text-white shadow-[0_0_20px_rgba(14,165,233,0.5)] transform scale-50 group-hover:scale-100 transition-transform duration-300">
-                              <Icon name="ArrowRight" size={24} />
-                           </div>
-                        </div>
-                      </div>
-                      <div className="absolute bottom-0 left-0 right-0 p-5">
-                        <h3 className="font-black text-lg text-white leading-tight uppercase italic mb-2 line-clamp-2 group-hover:text-primary-400 transition-colors">
-                          {item.name}
-                        </h3>
-                        <div className="flex items-center justify-between border-t border-white/10 pt-3 mt-1">
-                          <span className="text-[10px] text-slate-300 font-mono font-bold bg-white/10 backdrop-blur-sm px-2 py-0.5 rounded">{item.version}</span>
-                          <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
-                             Details <Icon name="ChevronRight" size={12} />
-                          </span>
-                        </div>
-                      </div>
-                  </motion.div>
+                          </div>
+                      </motion.div>
                 ))}
               </div>
 

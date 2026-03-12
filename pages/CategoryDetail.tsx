@@ -165,15 +165,6 @@ const NexaProjectModal: React.FC<{ project: NexaProject; onClose: () => void }> 
                         </AnimatePresence>
                     </div>
 
-                    <div className="flex gap-4">
-                        <button className="flex-1 py-3 px-4 rounded-xl border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors flex items-center justify-center gap-2">
-                             Buy Via Whatsapp
-                        </button>
-                        <button className="flex-1 py-3 px-4 rounded-xl bg-primary-600 text-white font-bold hover:bg-primary-700 transition-colors shadow-lg shadow-primary-500/30">
-                            Visit Website
-                        </button>
-                    </div>
-
                 </div>
             </div>
         </motion.div>

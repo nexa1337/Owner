@@ -4,6 +4,62 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { jsPDF } from "jspdf";
 import Icon from '../components/Icon';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar
+} from 'recharts';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+
+const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxbQKmoUUH4KzLmkAYZMGpoORPDTFYTzqCpnScEFIw5ngQ1cgzvFWU5fq0OXe2M5Ref/exec';
+const NOTES_API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzP9JCAZ3AGLz4VOaQitdLd5fstCCyp7k2nm7NliK8--c6llxzdhGNvMAF1s1kPifJFmg/exec';
+
+// --- CHART DATA ---
+const ARCHVIZ_SALARY_DATA = [
+  { year: '2026', morocco: 6000, international: 25000, ai_impact: 10 },
+  { year: '2027', morocco: 7500, international: 32000, ai_impact: 25 },
+  { year: '2028', morocco: 9000, international: 40000, ai_impact: 40 },
+  { year: '2029', morocco: 11000, international: 48000, ai_impact: 55 },
+  { year: '2030', morocco: 13000, international: 55000, ai_impact: 70 },
+  { year: '2031', morocco: 15000, international: 62000, ai_impact: 80 },
+  { year: '2032', morocco: 17000, international: 70000, ai_impact: 85 },
+  { year: '2033', morocco: 19000, international: 78000, ai_impact: 90 },
+  { year: '2034', morocco: 21000, international: 85000, ai_impact: 92 },
+  { year: '2035', morocco: 24000, international: 95000, ai_impact: 95 },
+];
+
+const FREELANCE_GROWTH_DATA = [
+  { year: '2026', income: 1500, ai_income: 2200, demand: 40 },
+  { year: '2027', income: 3000, ai_income: 4500, demand: 55 },
+  { year: '2028', income: 5500, ai_income: 8500, demand: 70 },
+  { year: '2029', income: 8000, ai_income: 14000, demand: 85 },
+  { year: '2030', income: 12000, ai_income: 22000, demand: 95 },
+];
+
+const CYBERSEC_DEMAND_DATA = [
+  { year: '2026', demand: 60, shortage: 40 },
+  { year: '2028', demand: 75, shortage: 55 },
+  { year: '2030', demand: 90, shortage: 70 },
+  { year: '2032', demand: 95, shortage: 85 },
+  { year: '2035', demand: 100, shortage: 95 },
+];
+
+const ONLINE_BIZ_SCALING_DATA = [
+  { stage: 'Start', revenue: 0 },
+  { stage: 'Traffic', revenue: 1000 },
+  { stage: 'Scale', revenue: 5000 },
+  { stage: 'Auto', revenue: 15000 },
+  { stage: 'Exit', revenue: 50000 },
+];
 
 // --- TYPES ---
 interface Note {
@@ -61,22 +117,34 @@ const FINANCIAL_WISDOM = {
     survival: [
         { text: "The Richest Man in Babylon: 'A part of all you earn is yours to keep.' Save 10% even if it hurts. In Morocco, call it 'Dwa d Zman'.", source: "The Richest Man in Babylon" },
         { text: "Rich Dad: 'The poor and middle class work for money.' Right now, you are working for money. Keep costs low to start buying freedom.", source: "Rich Dad Poor Dad" },
-        { text: "Stop trying to look rich. A new phone on credit is a liability. If it doesn't put money in your pocket, don't buy it.", source: "Common Sense" }
+        { text: "Stop trying to look rich. A new phone on credit is a liability. If it doesn't put money in your pocket, don't buy it.", source: "Common Sense" },
+        { text: "Atomic Habits: 'You do not rise to the level of your goals. You fall to the level of your systems.' Automate your savings.", source: "James Clear" },
+        { text: "The Millionaire Fastlane: 'Wealth is not an event, it is a process.' Stop looking for a lottery ticket. Start building skills.", source: "MJ DeMarco" },
+        { text: "Don't eat out every day. That 50 DH lunch adds up to 1500 DH/month. That's a plane ticket or a course.", source: "Moroccan Reality" }
     ],
     foundation: [
         { text: "Psychology of Money: 'Wealth is what you don't see.' Wealth is the nice car not purchased. The diamonds not bought. Build your safety net silently.", source: "The Psychology of Money" },
         { text: "Rich Dad: 'Assets put money in your pocket. Liabilities take money out.' A Dacia depreciates. A stock dividend pays you. Know the difference.", source: "Rich Dad Poor Dad" },
-        { text: "Pay yourself first. Before paying Lydec, Orange, or the cafe, route money to your savings account automatically.", source: "The Richest Man in Babylon" }
+        { text: "Pay yourself first. Before paying Lydec, Orange, or the cafe, route money to your savings account automatically.", source: "The Richest Man in Babylon" },
+        { text: "Think and Grow Rich: 'The starting point of all achievement is DESIRE.' How bad do you want financial freedom?", source: "Napoleon Hill" },
+        { text: "The Almanack of Naval Ravikant: 'Earn with your mind, not your time.' Start thinking about leverage.", source: "Naval Ravikant" },
+        { text: "Avoid 'Bad Debt' like consumer loans for weddings or vacations. Only use debt to buy assets that pay you.", source: "Financial Literacy 101" }
     ],
     growth: [
         { text: "Atomic Habits of Money: Small 1% improvements in your investment portfolio compound over time. Don't rush for the 'Hamza', look for consistency.", source: "James Clear (Adapted)" },
         { text: "Rich Dad: 'Mind your own business.' Your job pays the bills, but your investments build your empire. Focus on the latter.", source: "Rich Dad Poor Dad" },
-        { text: "Don't increase your lifestyle just because your salary increased. That's the 'Rat Race' trap. Invest the difference.", source: "Rich Dad Poor Dad" }
+        { text: "Don't increase your lifestyle just because your salary increased. That's the 'Rat Race' trap. Invest the difference.", source: "Rich Dad Poor Dad" },
+        { text: "The 4-Hour Workweek: 'Focus on being productive instead of busy.' Outsourcing low-value tasks buys you freedom.", source: "Tim Ferriss" },
+        { text: "Zero to One: 'Competition is for losers.' Build a monopoly in a niche market. Be unique.", source: "Peter Thiel" },
+        { text: "Invest in what you understand. If you don't know crypto, learn first. Don't follow the hype train blindly.", source: "Warren Buffett" }
     ],
     freedom: [
         { text: "Psychology of Money: 'Control over your time is the highest dividend money pays.' You are not buying things anymore, you are buying time.", source: "The Psychology of Money" },
         { text: "Diversify. Real Estate in Tangier, Stocks in Casablanca, Crypto in the cloud. Never keep all your eggs in one basket.", source: "General Wisdom" },
-        { text: "The purpose of wealth is freedom, not showing off. Be the 'Moul Chekara' who wears simple clothes but owns the building.", source: "Moroccan Wisdom" }
+        { text: "The purpose of wealth is freedom, not showing off. Be the 'Moul Chekara' who wears simple clothes but owns the building.", source: "Moroccan Wisdom" },
+        { text: "Principles: 'Pain + Reflection = Progress.' Learn from your investment mistakes. They are tuition fees.", source: "Ray Dalio" },
+        { text: "The Black Swan: 'Prepare for the unexpected.' Have a robust portfolio that can survive a market crash.", source: "Nassim Taleb" },
+        { text: "Legacy: 'The true meaning of life is to plant trees, under whose shade you do not expect to sit.' Build for the next generation.", source: "Nelson Henderson" }
     ]
 };
 
@@ -181,6 +249,11 @@ const PersonalFinance: React.FC = () => {
   const [salary, setSalary] = useState(3000);
   const [totalSaved, setTotalSaved] = useState(0); // For emergency fund calc
   
+  // --- SMART CALCULATOR STATE ---
+  const [calcCost, setCalcCost] = useState<number | ''>('');
+  const [calcSavings, setCalcSavings] = useState<number | ''>('');
+  const [calcCurrency, setCalcCurrency] = useState<'MAD' | 'USD' | 'EUR'>('MAD');
+  
   // Smart Connected Expenses
   const [expenses, setExpenses] = useState<ExpenseItem[]>([
     { id: 'rent', label: 'Rent / Housing', cost: 0, paid: false, icon: 'Home', category: 'fixed' },
@@ -192,10 +265,45 @@ const PersonalFinance: React.FC = () => {
   ]);
 
   // --- NOTES STATE ---
-  const [notes, setNotes] = useState<Note[]>(() => {
-    const saved = localStorage.getItem('nexa_admin_notes');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [notes, setNotes] = useState<Note[]>([]);
+
+  // Fetch notes from Google Sheet on mount
+  useEffect(() => {
+    const fetchNotes = async () => {
+      try {
+        const response = await fetch(NOTES_API_ENDPOINT);
+        const result = await response.json();
+        
+        if (result.status === 'success' && Array.isArray(result.data)) {
+            // Map the raw array data to Note objects
+            // Assuming result.data is [[id, title, text, date, color], ...]
+            // Skip header row if present (check if first item is 'ID')
+            const rows = result.data[0][0] === 'ID' ? result.data.slice(1) : result.data;
+            
+            const fetchedNotes = rows.map((row: any[]) => ({
+                id: Number(row[0]),
+                title: row[1],
+                text: row[2],
+                date: row[3],
+                color: row[4]
+            })).reverse(); // Show newest first
+            
+            setNotes(fetchedNotes);
+            // Sync to local storage as backup
+            localStorage.setItem('nexa_admin_notes', JSON.stringify(fetchedNotes));
+        }
+      } catch (error) {
+        console.error("Failed to fetch notes:", error);
+        // Fallback to local storage if fetch fails
+        const saved = localStorage.getItem('nexa_admin_notes');
+        if (saved) setNotes(JSON.parse(saved));
+      }
+    };
+
+    if (activeTab === 'mind') {
+        fetchNotes();
+    }
+  }, [activeTab]);
   const [noteSearch, setNoteSearch] = useState('');
   const [newNoteTitle, setNewNoteTitle] = useState('');
   const [newNoteText, setNewNoteText] = useState('');
@@ -361,18 +469,83 @@ const PersonalFinance: React.FC = () => {
     }));
   };
 
-  const addNote = () => {
+  const [isSavingNote, setIsSavingNote] = useState(false);
+
+    const insertMarkdown = (prefix: string, suffix: string = '') => {
+        const textarea = document.getElementById('note-textarea') as HTMLTextAreaElement;
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = newNoteText;
+        const before = text.substring(0, start);
+        const selection = text.substring(start, end);
+        const after = text.substring(end);
+
+        const newText = before + prefix + (selection || 'text') + suffix + after;
+        setNewNoteText(newText);
+        
+        setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start + prefix.length, end + prefix.length);
+        }, 0);
+    };
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const [notesPerPage, setNotesPerPage] = useState(9); // Default to laptop view
+
+    // Responsive notes per page
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth >= 1024) {
+                setNotesPerPage(9); // Laptop
+            } else if (window.innerWidth >= 768) {
+                setNotesPerPage(6); // Tablet
+            } else {
+                setNotesPerPage(4); // Mobile
+            }
+        };
+        
+        // Initial check
+        handleResize();
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const [selectedNote, setSelectedNote] = useState<any>(null);
+
+  const addNote = async () => {
     if (!newNoteText.trim() && !newNoteTitle.trim()) return;
+    
     const randomColor = NOTE_COLORS[Math.floor(Math.random() * NOTE_COLORS.length)];
-    setNotes([{ 
+    const newNote = { 
       id: Date.now(), 
       title: newNoteTitle || 'Untitled Idea',
       text: newNoteText, 
       date: new Date().toLocaleDateString(),
       color: randomColor
-    }, ...notes]);
+    };
+
+    // Optimistic Update
+    setNotes([newNote, ...notes]);
     setNewNoteTitle('');
     setNewNoteText('');
+    setIsSavingNote(true);
+
+    try {
+        // Attempt to save to Google Sheet
+        await fetch(NOTES_API_ENDPOINT, {
+            method: 'POST',
+            mode: 'no-cors', // Use no-cors for Google Apps Script simple triggers
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'addNote', ...newNote })
+        });
+    } catch (e) {
+        console.error("Failed to sync note to cloud", e);
+    } finally {
+        setIsSavingNote(false);
+    }
   };
 
   const deleteNote = (id: number) => setNotes(notes.filter(n => n.id !== id));
@@ -583,6 +756,39 @@ const PersonalFinance: React.FC = () => {
       const randomTip = tips[Math.floor(Math.random() * tips.length)];
       return randomTip;
   }, [salary]);
+
+  // --- SMART CALCULATOR LOGIC ---
+  const calculatorResult = useMemo(() => {
+    if (!calcCost || !calcSavings || Number(calcSavings) <= 0) return null;
+    const cost = Number(calcCost);
+    const savings = Number(calcSavings);
+    const months = Math.ceil(cost / savings);
+    const years = (months / 12).toFixed(1);
+
+    // Fast Track Logic (e.g., target half the time)
+    const targetMonths = Math.max(1, Math.floor(months / 2));
+    const requiredSavings = Math.ceil(cost / targetMonths);
+
+    return { months, years, cost, savings, targetMonths, requiredSavings };
+  }, [calcCost, calcSavings]);
+
+  const calculatorAdvice = useMemo(() => {
+      if (!calculatorResult) return null;
+      const { months, requiredSavings, targetMonths } = calculatorResult;
+      
+      const advice = [];
+      
+      // Standard Advice
+      if (months <= 3) advice.push("🚀 Speed Run: You are very close! Stay consistent.");
+      else if (months <= 12) advice.push("📅 Medium Term: A solid goal. Automate your savings.");
+      else if (months <= 24) advice.push("🏗️ Long Term: This is a marathon. Stay disciplined.");
+      else advice.push("🏔️ Grand Vision: Break this down into smaller milestones.");
+
+      // Fast Track Advice
+      advice.push(`💡 Pro Tip: If you save ${requiredSavings.toLocaleString()} per month, you can buy it in just ${targetMonths} months!`);
+
+      return advice;
+  }, [calculatorResult]);
 
   // --- PDF GENERATION ---
   const handleDownloadPDF = () => {
@@ -841,6 +1047,111 @@ const PersonalFinance: React.FC = () => {
               </div>
             </div>
 
+            {/* 2.5 SMART BUYING CALCULATOR */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 md:p-8 shadow-sm">
+                <div className="flex items-center gap-2 mb-6">
+                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg">
+                        <Icon name="Calculator" size={24} />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Smart Buying Calculator</h2>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Plan your future purchases accurately</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                    {/* Inputs */}
+                    <div className="space-y-6">
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2 block">Target Object Cost</label>
+                            <div className="relative flex items-center">
+                                <input 
+                                    type="number" 
+                                    value={calcCost} 
+                                    onChange={(e) => setCalcCost(e.target.value === '' ? '' : Number(e.target.value))} 
+                                    placeholder="e.g. 90000"
+                                    className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-2xl pl-4 pr-24 py-4 text-2xl font-black text-slate-900 dark:text-white focus:border-indigo-500 outline-none transition-colors font-mono"
+                                />
+                                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex bg-white dark:bg-slate-800 rounded-xl p-1 border border-slate-200 dark:border-slate-700">
+                                    {['MAD', 'USD', 'EUR'].map(c => (
+                                        <button 
+                                            key={c}
+                                            onClick={() => setCalcCurrency(c as any)}
+                                            className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${calcCurrency === c ? 'bg-indigo-500 text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}
+                                        >
+                                            {c}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2 block">Monthly Savings Capacity</label>
+                            <div className="relative">
+                                <input 
+                                    type="number" 
+                                    value={calcSavings} 
+                                    onChange={(e) => setCalcSavings(e.target.value === '' ? '' : Number(e.target.value))} 
+                                    placeholder="e.g. 2000"
+                                    className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-4 text-2xl font-black text-slate-900 dark:text-white focus:border-indigo-500 outline-none transition-colors font-mono"
+                                />
+                                <span className="absolute right-6 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">{calcCurrency} / Month</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Results */}
+                    <div className="bg-slate-50 dark:bg-slate-800/50 rounded-3xl p-6 border border-slate-200 dark:border-slate-700/50 h-full flex flex-col justify-center">
+                        {calculatorResult ? (
+                            <div className="text-center">
+                                <div className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Estimated Time</div>
+                                <div className="flex items-baseline justify-center gap-2 mb-2">
+                                    <span className="text-6xl font-black text-indigo-600 dark:text-indigo-400">{calculatorResult.months}</span>
+                                    <span className="text-xl font-bold text-slate-400">Months</span>
+                                </div>
+                                <div className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-6">
+                                    ({calculatorResult.years} Years)
+                                </div>
+                                
+                                <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-indigo-100 dark:border-indigo-900/30 text-left relative overflow-hidden space-y-3">
+                                    <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
+                                    
+                                    {/* Standard Advice */}
+                                    <div className="flex gap-3">
+                                        <Icon name="Zap" className="text-indigo-500 shrink-0 mt-0.5" size={18} />
+                                        <div>
+                                            <h4 className="font-bold text-slate-900 dark:text-white text-sm mb-1">Current Plan</h4>
+                                            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                                {calculatorAdvice && calculatorAdvice[0]}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Fast Track Advice */}
+                                    {calculatorAdvice && calculatorAdvice[1] && (
+                                        <div className="flex gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                                            <Icon name="Rocket" className="text-emerald-500 shrink-0 mt-0.5" size={18} />
+                                            <div>
+                                                <h4 className="font-bold text-slate-900 dark:text-white text-sm mb-1">Fast Track 🚀</h4>
+                                                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                                    {calculatorAdvice[1].replace('💡 Pro Tip: ', '')}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="text-center text-slate-400 opacity-50">
+                                <Icon name="Calculator" size={48} className="mx-auto mb-4" />
+                                <p className="text-sm font-bold">Enter values to calculate</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
             {/* 3. SMART WARNINGS & ALERTS */}
             <div className="space-y-2">
                 {smartWarnings.map((warn, idx) => (
@@ -903,23 +1214,25 @@ const PersonalFinance: React.FC = () => {
                 </div>
 
                 {/* Moroccan Advisor */}
-                <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-3xl p-6 relative overflow-hidden flex flex-col justify-center">
-                    <div className="absolute top-0 right-0 p-4 opacity-10"><Icon name="Bot" size={64} /></div>
+                <div className="bg-amber-50 dark:bg-gradient-to-br dark:from-slate-900 dark:to-slate-800 text-slate-900 dark:text-white rounded-3xl p-6 relative overflow-hidden flex flex-col justify-center border border-amber-200 dark:border-slate-700 shadow-sm">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 text-amber-500 dark:text-white"><Icon name="Bot" size={64} /></div>
                     <div className="relative z-10">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-xl">🧞‍♂️</div>
+                            <div className="w-10 h-10 bg-white dark:bg-white/10 rounded-full flex items-center justify-center text-xl shadow-md border border-amber-100 dark:border-transparent text-amber-500">
+                                <Icon name="Bulb" size={20} />
+                            </div>
                             <div>
-                                <h4 className="font-bold text-lg">Moroccan Advisor</h4>
-                                <span className="text-[10px] uppercase tracking-widest opacity-60">Book Wisdom • Moroccan Context</span>
+                                <h4 className="font-bold text-lg text-slate-900 dark:text-white">Moroccan Advisor</h4>
+                                <span className="text-[10px] uppercase tracking-widest opacity-60 font-bold text-slate-500 dark:text-slate-400">Book Wisdom • Moroccan Context</span>
                             </div>
                         </div>
-                        <div className="bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/10 mb-4 relative">
-                            <Icon name="Quote" size={24} className="absolute -top-3 -left-2 text-amber-400 opacity-80 bg-slate-900 rounded-full p-1" />
-                            <p className="text-sm font-medium italic leading-relaxed pt-2">"{dailyTip.text}"</p>
+                        <div className="bg-white dark:bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-amber-100 dark:border-white/10 mb-4 relative shadow-sm">
+                            <Icon name="Quote" size={24} className="absolute -top-3 -left-2 text-amber-500 dark:text-amber-400 bg-amber-50 dark:bg-slate-900 rounded-full p-1 border border-amber-100 dark:border-slate-700" />
+                            <p className="text-sm font-medium italic leading-relaxed pt-2 text-slate-700 dark:text-slate-200">"{dailyTip.text}"</p>
                         </div>
-                        <div className="flex justify-between items-center text-[10px] opacity-60">
-                            <span>Source: <span className="font-bold text-white">{dailyTip.source}</span></span>
-                            <span>Phase: <span className="uppercase">{phase.name}</span></span>
+                        <div className="flex justify-between items-center text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                            <span>Source: <span className="font-bold text-slate-900 dark:text-white">{dailyTip.source}</span></span>
+                            <span>Phase: <span className="uppercase text-amber-600 dark:text-amber-400 font-bold">{phase.name}</span></span>
                         </div>
                     </div>
                 </div>
@@ -929,26 +1242,505 @@ const PersonalFinance: React.FC = () => {
           </motion.div>
         )}
 
-        {/* TAB: MIND (ROADMAPS) */}
+        {/* TAB: MIND (MINDMAP) */}
         {activeTab === 'mind' && (
           <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="max-w-7xl mx-auto space-y-10">
-            <div className="bg-slate-900 text-white rounded-3xl p-6 md:p-8 relative overflow-hidden shadow-xl">
-                <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/20 rounded-full blur-[100px] -mr-20 -mt-20 pointer-events-none"></div>
-                <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-600/20 rounded-full blur-[100px] -ml-20 -mb-20 pointer-events-none"></div>
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-end relative z-10 gap-6">
-                    <div><div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/10 mb-3"><span className="animate-pulse w-2 h-2 bg-emerald-400 rounded-full"></span><span className="text-[10px] font-bold uppercase tracking-widest text-slate-300">Target Date: <span className="text-white">02/03/2031</span></span></div><h2 className="text-3xl md:text-5xl font-black text-white uppercase italic tracking-tighter mb-2">Vision <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">2031</span></h2><p className="text-sm text-slate-400 max-w-xl font-medium">Strategic roadmap execution. Tracking progress across Work, Health, Hobbies, and Business.</p></div>
-                    <div className="flex items-center gap-4 bg-white/5 backdrop-blur-md p-4 rounded-2xl border border-white/10"><div className="relative w-16 h-16 flex items-center justify-center"><svg className="w-full h-full transform -rotate-90"><circle cx="32" cy="32" r="28" stroke="rgba(255,255,255,0.1)" strokeWidth="6" fill="transparent" /><circle cx="32" cy="32" r="28" stroke="currentColor" strokeWidth="6" fill="transparent" strokeDasharray={175.9} strokeDashoffset={175.9 - (175.9 * visionStats.progress) / 100} className="text-blue-500 transition-all duration-1000 ease-out" /></svg><span className="absolute text-sm font-bold text-white">{Math.round(visionStats.progress)}%</span></div><div className="text-right"><div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{visionStats.status}</div><div className="text-2xl font-mono font-black text-white">{visionStats.daysLeft} <span className="text-xs font-sans text-slate-500 font-bold">DAYS</span></div></div></div>
+            
+            {/* MASTER MIND VISUALIZATION */}
+            <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-3xl p-4 md:p-8 relative overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800">
+                <div className="absolute top-0 right-0 w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-blue-600/5 dark:bg-blue-600/10 rounded-full blur-[80px] md:blur-[120px] -mr-20 -mt-20 pointer-events-none"></div>
+                <div className="absolute bottom-0 left-0 w-[200px] md:w-[400px] h-[200px] md:h-[400px] bg-purple-600/5 dark:bg-purple-600/10 rounded-full blur-[60px] md:blur-[100px] -ml-20 -mb-20 pointer-events-none"></div>
+                
+                <div className="relative z-10">
+                    <div className="text-center mb-12 md:mb-16">
+                        <h2 className="text-4xl md:text-7xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter mb-4">
+                            Master <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">Mind</span>
+                        </h2>
+                        <p className="text-slate-500 dark:text-slate-400 font-mono text-[10px] md:text-sm uppercase tracking-[0.4em]">Strategic Neural Network • 2026-2035 Vision</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                        
+                        {/* 1. CAREER & ARCHVIZ */}
+                        <div className="bg-slate-50 dark:bg-slate-800/40 backdrop-blur-md border border-slate-200 dark:border-slate-700/50 rounded-3xl p-6 md:p-8 hover:border-blue-500/30 transition-all duration-500 group">
+                            <div className="flex items-center gap-4 mb-8">
+                                <div className="p-3 rounded-2xl bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform shadow-lg shadow-blue-500/10">
+                                    <Icon name="Briefcase" size={28} />
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">Career & ArchViz</h3>
+                                    <p className="text-xs text-blue-600 dark:text-blue-400 font-mono uppercase tracking-wider">The Foundation</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-8">
+                                {/* Offline Work Details */}
+                                <div className="relative pl-6 border-l-2 border-blue-500/30">
+                                    <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-blue-500 border-4 border-white dark:border-slate-900 shadow-lg shadow-blue-500/50"></div>
+                                    <h4 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Offline Work <span className="text-sm font-normal text-slate-500 dark:text-slate-400 ml-2">(ArchViz Expert)</span></h4>
+                                    
+                                    <div className="grid grid-cols-2 gap-2 mb-4">
+                                        {['3Ds Max', 'Revit', 'V-Ray', 'Unreal Engine 5'].map((skill, i) => (
+                                            <div key={i} className="bg-white dark:bg-slate-900/80 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 font-mono flex items-center gap-2">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 dark:bg-blue-400"></div> {skill}
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="bg-white dark:bg-slate-900/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700/50 mb-6">
+                                        <h5 className="text-xs font-bold text-blue-600 dark:text-blue-300 uppercase tracking-wider mb-3">Learning Path (Zero to Expert)</h5>
+                                        <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
+                                            <li className="flex gap-2"><span className="text-blue-600 dark:text-blue-500">0-3 Mo:</span> 3Ds Max Modeling & Revit BIM Basics</li>
+                                            <li className="flex gap-2"><span className="text-blue-600 dark:text-blue-500">3-6 Mo:</span> V-Ray Lighting/Materials & Unreal Engine Setup</li>
+                                            <li className="flex gap-2"><span className="text-blue-600 dark:text-blue-500">6-12 Mo:</span> Advanced UE5 Blueprints & Interactive Walkthroughs</li>
+                                            <li className="flex gap-2"><span className="text-blue-600 dark:text-blue-500">12+ Mo:</span> VR Integration & AI Workflow Optimization</li>
+                                        </ul>
+                                    </div>
+
+                                    {/* SALARY CHART */}
+                                    <div className="h-64 w-full bg-white dark:bg-slate-900/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700/50 flex flex-col" style={{ minHeight: '300px' }}>
+                                        <h5 className="text-xs font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wider mb-4 text-center">Salary Projection (2026-2035) • MAD vs USD</h5>
+                                        <div style={{ width: '100%', height: '100%', minHeight: '200px' }}>
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <AreaChart data={ARCHVIZ_SALARY_DATA}>
+                                                    <defs>
+                                                        <linearGradient id="colorInt" x1="0" y1="0" x2="0" y2="1">
+                                                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                                                        </linearGradient>
+                                                        <linearGradient id="colorMor" x1="0" y1="0" x2="0" y2="1">
+                                                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                                                            <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                                                        </linearGradient>
+                                                    </defs>
+                                                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                                                    <XAxis dataKey="year" stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
+                                                    <YAxis stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(value) => `${value/1000}k`} />
+                                                    <Tooltip 
+                                                        contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px', fontSize: '12px' }}
+                                                        itemStyle={{ color: '#e2e8f0' }}
+                                                    />
+                                                    <Area type="monotone" dataKey="international" name="Intl (USD/Yr)" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorInt)" />
+                                                    <Area type="monotone" dataKey="morocco" name="Morocco (MAD/Mo)" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorMor)" />
+                                                </AreaChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </div>
+                                    <p className="text-[10px] text-slate-500 mt-2 text-center italic">
+                                        *International rates based on Dubai/USA remote standards. AI Impact integrated.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 2. FREELANCER & TECH */}
+                        <div className="bg-slate-50 dark:bg-slate-800/40 backdrop-blur-md border border-slate-200 dark:border-slate-700/50 rounded-3xl p-6 md:p-8 hover:border-purple-500/30 transition-all duration-500 group">
+                            <div className="flex items-center gap-4 mb-8">
+                                <div className="p-3 rounded-2xl bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform shadow-lg shadow-purple-500/10">
+                                    <Icon name="Code" size={28} />
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">Freelancer & Tech</h3>
+                                    <p className="text-xs text-purple-600 dark:text-purple-400 font-mono uppercase tracking-wider">The Accelerator</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-8">
+                                {/* Mobile & Backend */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="bg-white dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700/50 hover:border-cyan-500/50 transition-colors">
+                                        <h4 className="text-sm font-bold text-cyan-600 dark:text-cyan-400 mb-1">Mobile App Dev</h4>
+                                        <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-3">Flutter • Dart • Android Studio</p>
+                                        <div className="h-1 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                            <div className="h-full bg-cyan-500 w-3/4 shadow-[0_0_10px_rgba(6,182,212,0.5)]"></div>
+                                        </div>
+                                    </div>
+                                    <div className="bg-white dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700/50 hover:border-purple-500/50 transition-colors">
+                                        <h4 className="text-sm font-bold text-purple-600 dark:text-purple-400 mb-1">Backend & API</h4>
+                                        <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-3">PHP • Laravel • DB • N8N</p>
+                                        <div className="h-1 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                            <div className="h-full bg-purple-500 w-1/2 shadow-[0_0_10px_rgba(168,85,247,0.5)]"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* FREELANCE CHART */}
+                                <div className="h-64 w-full bg-white dark:bg-slate-900/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700/50 flex flex-col" style={{ minHeight: '300px' }}>
+                                    <h5 className="text-xs font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wider mb-4 text-center">Income Growth: Standard vs AI-Augmented ($/Mo)</h5>
+                                    <div style={{ width: '100%', height: '100%', minHeight: '200px' }}>
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart data={FREELANCE_GROWTH_DATA}>
+                                                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                                                <XAxis dataKey="year" stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
+                                                <Tooltip 
+                                                    cursor={{fill: '#1e293b'}}
+                                                    contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px', fontSize: '12px' }}
+                                                    itemStyle={{ color: '#e2e8f0' }}
+                                                />
+                                                <Bar dataKey="income" name="Standard" fill="#a855f7" radius={[4, 4, 0, 0]} />
+                                                <Bar dataKey="ai_income" name="With AI Tools" fill="#06b6d4" radius={[4, 4, 0, 0]} />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+
+                                {/* AI ADVICE SECTION */}
+                                <div className="bg-white dark:bg-slate-900/50 rounded-xl p-5 border border-slate-200 dark:border-slate-700/50 relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 p-4 opacity-5"><Icon name="Bot" size={48} /></div>
+                                    <h5 className="text-sm font-bold text-cyan-600 dark:text-cyan-400 mb-3 flex items-center gap-2">
+                                        <Icon name="Zap" size={16} /> AI & The Future of Dev
+                                    </h5>
+                                    <div className="space-y-3 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                        <p>
+                                            <strong className="text-slate-900 dark:text-white">Will AI replace developers?</strong> No. AI will replace developers who <em className="text-slate-500 dark:text-slate-400">don't use AI</em>. The role is shifting from "writing code" to "architecting solutions."
+                                        </p>
+                                        <p>
+                                            <strong className="text-slate-900 dark:text-white">How to integrate AI?</strong> Don't let it think for you. Use it to:
+                                        </p>
+                                        <ul className="list-disc pl-4 space-y-1 text-slate-500 dark:text-slate-400">
+                                            <li>Generate boilerplate code & unit tests instantly.</li>
+                                            <li>Explain complex legacy code or new libraries.</li>
+                                            <li>Debug errors by pasting logs (it's faster than StackOverflow).</li>
+                                        </ul>
+                                        <p className="text-cyan-600 dark:text-cyan-300/80 italic border-l-2 border-cyan-500/30 pl-3 mt-2">
+                                            "Treat AI as a junior developer that types at lightspeed but needs your senior guidance."
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 3. HOBBIES (CYBERSEC) */}
+                        <div className="bg-slate-50 dark:bg-slate-800/40 backdrop-blur-md border border-slate-200 dark:border-slate-700/50 rounded-3xl p-6 md:p-8 hover:border-emerald-500/30 transition-all duration-500 group">
+                            <div className="flex items-center gap-4 mb-8">
+                                <div className="p-3 rounded-2xl bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform shadow-lg shadow-emerald-500/10">
+                                    <Icon name="Cpu" size={28} />
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">CyberSec & IT</h3>
+                                    <p className="text-xs text-emerald-600 dark:text-emerald-400 font-mono uppercase tracking-wider">The Shield</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-6">
+                                <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                                    Future-proofing skills in a digital world. High demand for security experts as AI threats rise.
+                                </p>
+                                
+                                {/* CYBERSEC CHART */}
+                                <div className="h-64 w-full bg-white dark:bg-slate-900/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700/50 flex flex-col" style={{ minHeight: '300px' }}>
+                                    <h5 className="text-xs font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wider mb-4 text-center">The Talent Gap: Global Demand vs. Supply Shortage</h5>
+                                    <div style={{ width: '100%', height: '100%', minHeight: '200px' }}>
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <AreaChart data={CYBERSEC_DEMAND_DATA}>
+                                                <defs>
+                                                    <linearGradient id="colorDemand" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                                                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                                                    </linearGradient>
+                                                    <linearGradient id="colorShortage" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.3}/>
+                                                        <stop offset="95%" stopColor="#f43f5e" stopOpacity={0}/>
+                                                    </linearGradient>
+                                                </defs>
+                                                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                                                <XAxis dataKey="year" stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
+                                                <Tooltip 
+                                                    contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px', fontSize: '12px' }}
+                                                    itemStyle={{ color: '#e2e8f0' }}
+                                                    labelStyle={{ color: '#94a3b8', marginBottom: '0.5rem' }}
+                                                />
+                                                <Area type="monotone" dataKey="demand" name="Market Demand" stroke="#10b981" strokeWidth={2} fill="url(#colorDemand)" />
+                                                <Area type="monotone" dataKey="shortage" name="Talent Shortage (Opportunity)" stroke="#f43f5e" strokeWidth={2} fill="url(#colorShortage)" />
+                                            </AreaChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+
+                                {/* EXPERT PATH & FUTURE OUTLOOK */}
+                                <div className="bg-white dark:bg-slate-900/50 rounded-xl p-5 border border-slate-200 dark:border-slate-700/50 relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 p-4 opacity-5"><Icon name="Shield" size={48} /></div>
+                                    
+                                    <div className="mb-6">
+                                        <h5 className="text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-2 flex items-center gap-2">
+                                            <Icon name="Activity" size={16} /> Future Outlook (2026-2035)
+                                        </h5>
+                                        <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                            <strong className="text-slate-900 dark:text-white">Will there be demand?</strong> <span className="text-emerald-600 dark:text-emerald-400 font-bold">YES.</span> As AI generates sophisticated cyber attacks, the world needs "Human-in-the-loop" security experts. The "Shortage" gap in the chart represents <em className="text-slate-900 dark:text-white">your salary leverage</em>.
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <h5 className="text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-3 flex items-center gap-2">
+                                            <Icon name="Tool" size={16} /> Path to Expert (The Toolkit)
+                                        </h5>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-200 dark:border-slate-700/50">
+                                                <span className="text-[10px] uppercase font-bold text-slate-500 block mb-1">Phase 1: Foundations</span>
+                                                <ul className="text-xs text-slate-600 dark:text-slate-300 space-y-1">
+                                                    <li>• <span className="text-emerald-600 dark:text-emerald-500">Networking:</span> TCP/IP, OSI, DNS</li>
+                                                    <li>• <span className="text-emerald-600 dark:text-emerald-500">OS:</span> Linux (Ubuntu/Kali) CLI</li>
+                                                    <li>• <span className="text-emerald-600 dark:text-emerald-500">Code:</span> Python (Scripting), Bash</li>
+                                                </ul>
+                                            </div>
+                                            <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-200 dark:border-slate-700/50">
+                                                <span className="text-[10px] uppercase font-bold text-slate-500 block mb-1">Phase 2: The Arsenal</span>
+                                                <ul className="text-xs text-slate-600 dark:text-slate-300 space-y-1">
+                                                    <li>• <span className="text-emerald-600 dark:text-emerald-500">Attack:</span> Metasploit, Burp Suite</li>
+                                                    <li>• <span className="text-emerald-600 dark:text-emerald-500">Recon:</span> Nmap, Wireshark, OSINT</li>
+                                                    <li>• <span className="text-emerald-600 dark:text-emerald-500">Cert:</span> Security+, then OSCP</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 4. EMPIRE & LIFESTYLE */}
+                        <div className="bg-slate-50 dark:bg-slate-800/40 backdrop-blur-md border border-slate-200 dark:border-slate-700/50 rounded-3xl p-6 md:p-8 hover:border-orange-500/30 transition-all duration-500 group">
+                            <div className="flex items-center gap-4 mb-8">
+                                <div className="p-3 rounded-2xl bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 group-hover:scale-110 transition-transform shadow-lg shadow-orange-500/10">
+                                    <Icon name="Globe" size={28} />
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">Empire & Life</h3>
+                                    <p className="text-xs text-orange-600 dark:text-orange-400 font-mono uppercase tracking-wider">The Reward</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-6">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="bg-white dark:bg-slate-900/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700/50">
+                                        <h5 className="text-xs font-bold text-orange-600 dark:text-orange-300 mb-2">Garage Goals</h5>
+                                        <ul className="space-y-1 text-[10px] text-slate-600 dark:text-slate-400">
+                                            <li>• Honda CBR 600RR</li>
+                                            <li>• Kawasaki Ninja ZX6R</li>
+                                            <li>• BMW E Series</li>
+                                        </ul>
+                                    </div>
+                                    <div className="bg-white dark:bg-slate-900/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700/50">
+                                        <h5 className="text-xs font-bold text-orange-600 dark:text-orange-300 mb-2">Online Biz</h5>
+                                        <ul className="space-y-1 text-[10px] text-slate-600 dark:text-slate-400">
+                                            <li>• Digital Agency</li>
+                                            <li>• POD Business</li>
+                                            <li>• Digital Products</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                {/* SCALING CHART */}
+                                <div className="h-64 w-full bg-white dark:bg-slate-900/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700/50 flex flex-col" style={{ minHeight: '300px' }}>
+                                    <h5 className="text-xs font-bold text-slate-500 dark:text-slate-300 uppercase tracking-wider mb-4 text-center">Business Scaling: The Compound Effect</h5>
+                                    <div style={{ width: '100%', height: '100%', minHeight: '200px' }}>
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <AreaChart data={ONLINE_BIZ_SCALING_DATA}>
+                                                <defs>
+                                                    <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="5%" stopColor="#f97316" stopOpacity={0.3}/>
+                                                        <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
+                                                    </linearGradient>
+                                                </defs>
+                                                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                                                <XAxis dataKey="stage" stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
+                                                <YAxis stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(value) => `${value/1000}k`} />
+                                                <Tooltip 
+                                                    contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px', fontSize: '12px' }}
+                                                    itemStyle={{ color: '#e2e8f0' }}
+                                                />
+                                                <Area type="monotone" dataKey="revenue" name="Revenue ($)" stroke="#f97316" strokeWidth={2} fill="url(#colorRev)" />
+                                            </AreaChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+
+                                {/* BUSINESS OWNER BLUEPRINT */}
+                                <div className="bg-white dark:bg-slate-900/50 rounded-xl p-5 border border-slate-200 dark:border-slate-700/50 relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 p-4 opacity-5"><Icon name="Briefcase" size={48} /></div>
+                                    
+                                    <h5 className="text-sm font-bold text-orange-600 dark:text-orange-400 mb-4 flex items-center gap-2">
+                                        <Icon name="Target" size={16} /> Business Owner's Blueprint
+                                    </h5>
+
+                                    <div className="space-y-4">
+                                        {/* Technical Skills */}
+                                        <div>
+                                            <span className="text-[10px] uppercase font-bold text-slate-500 block mb-2">Technical Arsenal (The "How")</span>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                <div className="bg-slate-50 dark:bg-slate-800/50 p-2 rounded border border-slate-200 dark:border-slate-700/50">
+                                                    <p className="text-xs text-slate-600 dark:text-slate-300"><strong className="text-orange-600 dark:text-orange-500">Marketing:</strong> Facebook Ads, Google SEO, Email Automation (Klaviyo/Mailchimp).</p>
+                                                </div>
+                                                <div className="bg-slate-50 dark:bg-slate-800/50 p-2 rounded border border-slate-200 dark:border-slate-700/50">
+                                                    <p className="text-xs text-slate-600 dark:text-slate-300"><strong className="text-orange-600 dark:text-orange-500">Analytics:</strong> GA4, Hotjar (User behavior), Excel/Sheets (Financial modeling).</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Soft Skills */}
+                                        <div>
+                                            <span className="text-[10px] uppercase font-bold text-slate-500 block mb-2">Owner Mindset (The "Who")</span>
+                                            <ul className="text-xs text-slate-600 dark:text-slate-300 space-y-1 list-disc pl-4">
+                                                <li><strong className="text-slate-900 dark:text-white">Delegation:</strong> Stop being the "technician." Hire freelancers for tasks &lt; $20/hr.</li>
+                                                <li><strong className="text-slate-900 dark:text-white">Sales:</strong> Learn to sell the <em>result</em>, not the product. (Psychology &gt; Logic).</li>
+                                                <li><strong className="text-slate-900 dark:text-white">Resilience:</strong> The chart goes up, but day-to-day is volatile. Emotional stability is key.</li>
+                                            </ul>
+                                        </div>
+
+                                        {/* Tools */}
+                                        <div className="pt-2 border-t border-slate-200 dark:border-slate-700/50">
+                                            <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                                                <strong className="text-orange-600 dark:text-orange-400">Essential Stack:</strong> Shopify/WooCommerce (Store), Stripe/PayPal (Payments), Notion (Management), Slack (Team).
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
             </div>
-            {visionStats.focusItems.length > 0 && (<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">{visionStats.focusItems.map((item, idx) => (<div key={idx} className={`bg-white dark:bg-slate-900 border-l-4 border-${item.color}-500 p-4 rounded-xl shadow-sm border-t border-r border-b border-slate-200 dark:border-slate-800`}><div className="flex items-center justify-between mb-2"><span className={`text-[10px] font-bold uppercase tracking-wider text-${item.color}-600 dark:text-${item.color}-400`}>Next Step: {item.area}</span><Icon name={item.icon} size={14} className={`text-${item.color}-500`} /></div><h4 className="font-bold text-sm text-slate-900 dark:text-white leading-tight">{item.goal}</h4></div>))}</div>)}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">{vision.map((area) => { const completedCount = area.goals.filter(g => g.done).length; const totalCount = area.goals.length; const areaProgress = totalCount === 0 ? 0 : (completedCount / totalCount) * 100; return (<div key={area.id} className="bg-slate-50 dark:bg-slate-900/50 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 relative overflow-hidden"><div className="flex items-center justify-between mb-6 relative z-10"><div className="flex items-center gap-3"><div className={`p-2 rounded-xl bg-${area.color}-100 dark:bg-${area.color}-900/30 text-${area.color}-600 dark:text-${area.color}-400`}><Icon name={area.icon} size={20} /></div><h3 className="font-bold text-lg text-slate-900 dark:text-white">{area.title}</h3></div><span className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400">{Math.round(areaProgress)}%</span></div><div className="h-1 w-full bg-slate-200 dark:bg-slate-800 rounded-full mb-8 relative z-10 overflow-hidden"><motion.div initial={{ width: 0 }} animate={{ width: `${areaProgress}%` }} className={`h-full bg-${area.color}-500`} /></div><div className="relative space-y-0 pl-4 z-10"><div className="absolute top-2 bottom-6 left-[27px] w-0.5 bg-slate-200 dark:bg-slate-800" />{area.goals.map((goal, idx) => (<div key={goal.id} className="relative flex items-start gap-4 py-3 group"><div onClick={() => toggleVisionGoal(area.id, goal.id)} className={`w-6 h-6 rounded-full border-2 z-10 flex items-center justify-center cursor-pointer transition-all hover:scale-110 shrink-0 bg-slate-50 dark:bg-slate-950 ${goal.done ? `border-${area.color}-500 bg-${area.color}-500 text-white` : `border-slate-300 dark:border-slate-600 hover:border-${area.color}-400`}`}>{goal.done && <Icon name="Check" size={12} />}</div><div className="flex-1 min-w-0 pt-0.5"><div className="flex justify-between items-start"><span onClick={() => toggleVisionGoal(area.id, goal.id)} className={`text-sm font-medium cursor-pointer transition-colors leading-tight ${goal.done ? 'text-slate-400 line-through' : 'text-slate-700 dark:text-slate-200'}`}>{goal.label}</span><button onClick={() => deleteVisionGoal(area.id, goal.id)} className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-all p-1"><Icon name="X" size={14} /></button></div>{!goal.done && idx === area.goals.findIndex(g => !g.done) && (<span className={`text-[10px] font-bold uppercase tracking-wider text-${area.color}-500 mt-1 inline-block animate-pulse`}>Current Focus</span>)}</div></div>))} <div className="relative flex items-center gap-4 pt-4"><div className="w-6 h-6 rounded-full border-2 border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 z-10 flex items-center justify-center shrink-0"><Icon name="Plus" size={10} className="text-slate-400" /></div><div className="flex-1 flex gap-2"><input type="text" placeholder="Add next step..." className="w-full bg-transparent text-sm border-b border-slate-200 dark:border-slate-800 focus:border-slate-400 dark:focus:border-slate-600 outline-none py-1 text-slate-700 dark:text-slate-300 placeholder:text-slate-400" value={newGoalInputs[area.id] || ''} onChange={(e) => setNewGoalInputs({ ...newGoalInputs, [area.id]: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && addVisionGoal(area.id)} /><button onClick={() => addVisionGoal(area.id)} className={`text-xs font-bold uppercase text-${area.color}-500 hover:text-${area.color}-600 disabled:opacity-50`} disabled={!newGoalInputs[area.id]}>Add</button></div></div></div></div>); })}</div>
+
+            {/* QUICK NOTES SECTION */}
             <div className="pt-8 border-t border-slate-200 dark:border-slate-800">
-                <div className="flex items-center justify-between mb-6"><h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><Icon name="FileText" className="text-slate-400"/> Quick Notes</h3><div className="relative w-full max-w-[200px]"><Icon name="Search" size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" /><input type="text" placeholder="Search notes..." value={noteSearch} onChange={(e) => setNoteSearch(e.target.value)} className="w-full pl-9 pr-4 py-2 bg-slate-100 dark:bg-slate-900 border border-transparent focus:border-blue-500 rounded-xl outline-none text-xs font-bold text-slate-900 dark:text-white placeholder:text-slate-400 transition-all" /></div></div>
+                <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <Icon name="FileText" className="text-slate-400"/> Quick Notes
+                        {isSavingNote && <span className="text-xs text-blue-500 font-normal animate-pulse ml-2">Syncing to Cloud...</span>}
+                    </h3>
+                    <div className="relative w-full max-w-[200px]">
+                        <Icon name="Search" size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input type="text" placeholder="Search notes..." value={noteSearch} onChange={(e) => setNoteSearch(e.target.value)} className="w-full pl-9 pr-4 py-2 bg-slate-100 dark:bg-slate-900 border border-transparent focus:border-blue-500 rounded-xl outline-none text-xs font-bold text-slate-900 dark:text-white placeholder:text-slate-400 transition-all" />
+                    </div>
+                </div>
                 <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 mb-8 shadow-sm">
-                    <div className="flex flex-col gap-3"><input placeholder="Title (Optional)..." value={newNoteTitle} onChange={(e) => setNewNoteTitle(e.target.value)} className="w-full bg-transparent text-lg font-bold text-slate-900 dark:text-white outline-none placeholder:text-slate-400" onKeyDown={(e) => { if(e.key === 'Enter') { e.preventDefault(); document.getElementById('note-textarea')?.focus(); } }} /><textarea id="note-textarea" value={newNoteText} onChange={(e) => setNewNoteText(e.target.value)} placeholder="Capture your idea..." className="w-full bg-transparent outline-none text-slate-600 dark:text-slate-300 min-h-[80px] resize-none placeholder:text-slate-500" onKeyDown={(e) => { if(e.key === 'Enter' && e.ctrlKey) { addNote(); } }}></textarea><div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-800"><span className="text-[10px] text-slate-400 font-medium hidden sm:inline-block">Ctrl + Enter to save</span><button onClick={addNote} disabled={!newNoteText.trim() && !newNoteTitle.trim()} className="w-full sm:w-auto px-6 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-blue-500/20 active:scale-95">Save Note</button></div></div>
+                    <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-100 dark:border-slate-800 overflow-x-auto no-scrollbar">
+                        <button onClick={() => insertMarkdown('**', '**')} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors" title="Bold"><Icon name="Bold" size={14} /></button>
+                        <button onClick={() => insertMarkdown('*', '*')} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors" title="Italic"><Icon name="Italic" size={14} /></button>
+                        <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-1"></div>
+                        <button onClick={() => insertMarkdown('- ')} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors" title="List"><Icon name="List" size={14} /></button>
+                        <button onClick={() => insertMarkdown('[', '](url)')} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors" title="Link"><Icon name="Link" size={14} /></button>
+                        <button onClick={() => insertMarkdown('![alt text](', ')')} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors" title="Image"><Icon name="Image" size={14} /></button>
+                        <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-1"></div>
+                        <button onClick={() => insertMarkdown('- [ ] ')} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors" title="Task List"><Icon name="CheckSquare" size={14} /></button>
+                        <button onClick={() => insertMarkdown('\n```\n', '\n```')} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors" title="Code Block"><Icon name="Code" size={14} /></button>
+                        <button onClick={() => insertMarkdown('\n| Header | Header |\n| --- | --- |\n| Cell | Cell |')} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors" title="Table"><Icon name="Grid" size={14} /></button>
+                    </div>
+                    <div className="flex flex-col gap-3">
+                        <input placeholder="Title (Optional)..." value={newNoteTitle} onChange={(e) => setNewNoteTitle(e.target.value)} className="w-full bg-transparent text-lg font-bold text-slate-900 dark:text-white outline-none placeholder:text-slate-400" onKeyDown={(e) => { if(e.key === 'Enter') { e.preventDefault(); document.getElementById('note-textarea')?.focus(); } }} />
+                        <textarea id="note-textarea" value={newNoteText} onChange={(e) => setNewNoteText(e.target.value)} placeholder="Capture your idea... (Markdown supported)" className="w-full bg-transparent outline-none text-slate-600 dark:text-slate-300 min-h-[120px] resize-none placeholder:text-slate-500 font-mono text-sm" onKeyDown={(e) => { if(e.key === 'Enter' && e.ctrlKey) { addNote(); } }}></textarea>
+                        <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-800">
+                            <span className="text-[10px] text-slate-400 font-medium hidden sm:inline-block">Ctrl + Enter to save • Markdown Supported</span>
+                            <button onClick={addNote} disabled={(!newNoteText.trim() && !newNoteTitle.trim()) || isSavingNote} className="w-full sm:w-auto px-6 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-blue-500/20 active:scale-95">
+                                {isSavingNote ? 'Saving...' : 'Save Note'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 {filteredNotes.length === 0 && (<div className="text-center py-10 text-slate-400"><p className="text-sm">No notes found. Start writing above!</p></div>)}
-                <div className="columns-1 md:columns-2 lg:columns-3 gap-4 space-y-4">{filteredNotes.map(note => (<div key={note.id} className={`break-inside-avoid p-5 rounded-2xl border shadow-sm relative group hover:-translate-y-1 transition-all duration-300 ${note.color}`}><h3 className="font-bold text-slate-900 dark:text-white text-lg mb-2">{note.title}</h3><p className="text-slate-800 dark:text-slate-200 text-sm leading-relaxed whitespace-pre-wrap font-medium">{note.text}</p><div className="mt-4 flex justify-between items-center pt-3 border-t border-black/10 dark:border-white/10"><span className="text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 opacity-70">{note.date}</span><button onClick={() => deleteNote(note.id)} className="text-red-500 hover:text-red-700 p-1 opacity-0 group-hover:opacity-100 transition-opacity"><Icon name="Trash" size={16} /></button></div></div>))}</div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredNotes.slice((currentPage - 1) * notesPerPage, currentPage * notesPerPage).map(note => (
+                        <div 
+                            key={note.id} 
+                            onClick={() => setSelectedNote(note)}
+                            className={`p-5 rounded-2xl border shadow-sm relative group hover:-translate-y-1 transition-all duration-300 cursor-pointer ${note.color}`}
+                        >
+                            <div className="flex justify-between items-start mb-2">
+                                <h3 className="font-bold text-slate-900 dark:text-white text-lg line-clamp-1">{note.title}</h3>
+                                <div className="p-1.5 bg-black/5 dark:bg-white/10 rounded-lg">
+                                    <Icon name="FileText" size={14} className="text-slate-600 dark:text-slate-300" />
+                                </div>
+                            </div>
+                            <div className="text-slate-500 dark:text-slate-400 text-xs font-medium mb-4">
+                                Capture idea...
+                            </div>
+                            <div className="flex justify-between items-center pt-3 border-t border-black/10 dark:border-white/10">
+                                <span className="text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 opacity-70">{note.date}</span>
+                                <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">Read More →</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Pagination Controls */}
+                {filteredNotes.length > notesPerPage && (
+                    <div className="flex justify-center items-center gap-4 mt-8">
+                        <button 
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                        >
+                            <Icon name="ChevronLeft" size={20} />
+                        </button>
+                        <span className="text-sm font-bold text-slate-500 dark:text-slate-400">
+                            Page {currentPage} of {Math.ceil(filteredNotes.length / notesPerPage)}
+                        </span>
+                        <button 
+                            onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredNotes.length / notesPerPage), p + 1))}
+                            disabled={currentPage === Math.ceil(filteredNotes.length / notesPerPage)}
+                            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                        >
+                            <Icon name="ChevronRight" size={20} />
+                        </button>
+                    </div>
+                )}
+
+                {/* Note Popup Modal */}
+                <AnimatePresence>
+                    {selectedNote && (
+                        <motion.div 
+                            initial={{ opacity: 0 }} 
+                            animate={{ opacity: 1 }} 
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                            onClick={() => setSelectedNote(null)}
+                        >
+                            <motion.div 
+                                initial={{ scale: 0.9, opacity: 0 }} 
+                                animate={{ scale: 1, opacity: 1 }} 
+                                exit={{ scale: 0.9, opacity: 0 }}
+                                className={`w-full max-w-2xl max-h-[80vh] overflow-y-auto rounded-3xl p-6 md:p-8 shadow-2xl relative ${selectedNote.color}`}
+                                onClick={e => e.stopPropagation()}
+                            >
+                                <button 
+                                    onClick={() => setSelectedNote(null)}
+                                    className="absolute top-4 right-4 p-2 bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 rounded-full transition-colors"
+                                >
+                                    <Icon name="X" size={20} className="text-slate-900 dark:text-white" />
+                                </button>
+
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="p-3 bg-black/5 dark:bg-white/10 rounded-xl">
+                                        <Icon name="FileText" size={24} className="text-slate-900 dark:text-white" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{selectedNote.title}</h2>
+                                        <p className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400 opacity-70">{selectedNote.date}</p>
+                                    </div>
+                                </div>
+
+                                <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 font-medium leading-relaxed">
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{selectedNote.text}</ReactMarkdown>
+                                </div>
+
+                                <div className="mt-8 pt-6 border-t border-black/10 dark:border-white/10 flex justify-end">
+                                    <button 
+                                        onClick={() => {
+                                            if(confirm('Are you sure you want to delete this note?')) {
+                                                deleteNote(selectedNote.id);
+                                                setSelectedNote(null);
+                                            }
+                                        }} 
+                                        className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-xl font-bold text-xs uppercase tracking-wider transition-colors"
+                                    >
+                                        <Icon name="Trash" size={16} /> Delete Note
+                                    </button>
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
           </motion.div>
         )}

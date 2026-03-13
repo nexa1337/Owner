@@ -107,7 +107,7 @@ ${message}`;
                allowFullScreen 
                loading="lazy" 
                referrerPolicy="no-referrer-when-downgrade"
-               title="NEXA 1337 Location"
+               title="N E X A 1337 Location"
                className="grayscale hover:grayscale-0 transition-all duration-500"
              ></iframe>
           </div>

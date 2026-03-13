@@ -9,9 +9,10 @@ import Home from './pages/Home';
 import Roadmap from './pages/Roadmap';
 import CategoryDetail from './pages/CategoryDetail';
 import Contact from './pages/Contact';
-import Chat from './pages/Chat';
+import About from './pages/About';
 import SecretArea from './pages/SecretArea';
 import PersonalFinance from './pages/PersonalFinance';
+import Footer from './components/Footer';
 
 // Logic to handle initial redirect and scrolling
 const AppBehavior = () => {
@@ -44,10 +45,11 @@ const App: React.FC = () => {
             <Route path="/roadmap" element={<Roadmap />} />
             <Route path="/roadmap/:id" element={<CategoryDetail />} />
             <Route path="/contact" element={<Contact />} />
-            <Route path="/chat" element={<Chat />} />
+            <Route path="/about" element={<About />} />
             <Route path="/secret" element={<SecretArea />} />
             <Route path="/personal-space" element={<PersonalFinance />} />
           </Routes>
+          <Footer />
         </main>
 
         <BottomNav />

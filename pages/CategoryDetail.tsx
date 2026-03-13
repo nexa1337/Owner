@@ -688,7 +688,7 @@ const CategoryDetail: React.FC = () => {
                   </h2>
                   
                   <p className="text-lg text-slate-300 max-w-3xl leading-relaxed">
-                    NEXA 1337 isn't just an agency; it's a movement to <span className="text-emerald-400 font-bold">democratize digital power</span>. 
+                    N E X A 1337 isn't just an agency; it's a movement to <span className="text-emerald-400 font-bold">democratize digital power</span>. 
                     We are bridging the gap between imagination and online reality, transforming small local businesses into dominant internet brands.
                     Our mission is to empower <span className="text-white font-bold">1 Million+ Clients</span> worldwide with cutting-edge automation, AI, and design.
                   </p>

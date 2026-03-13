@@ -16,7 +16,7 @@ const AD_CONFIG = {
   top: {
     desktop: "https://blogger.googleusercontent.com/img/a/AVvXsEjvKO51qmORWNQeRzbG0U66BuGMMlWmMsA344VdhJ8V3JcioC2XrW66Z3kGy4HQMsosM0LgGjCkVJ8NpZ1VIqQIz-mCNWf2jiDCevjoyxhPdqA6XP2XHfgLGCu8RoW85ZbirIllNSaBFZtKZ6z3-HWvKg8LZQxSlaU80PE4nVwUPB9b4feyPJjzjDMUZhVF",
     mobile: "https://blogger.googleusercontent.com/img/a/AVvXsEgUaBQ0XP17B2aUVnkbJxWXVg3PUDIKYDs4Q9t3mRsX79mhAPZkJGnPjvyeROac9NZW7MzYsiewRFgiaMbyPVz2dnwl--o6W0IPd95E-r-KWxmPCTtHVIpyXPfu4DdvTzW5wtGZk3ks4TwTK0TBxqOZgGl5eCoALki-Zuz-YEhFXcxsVXK-F1cHpVOy5CCz",
-    link: "https://nexa1337.github.io/digitalkeys"
+    link: "https://nexa1337.github.io/digitalstore"
   },
   bottom: {
     desktop: "https://blogger.googleusercontent.com/img/a/AVvXsEg0zMrZ22tyGW-aXpu2FAjvrfTlqRz699E3AMMRvV1z26qjt1QZTk45h6pPUhWEzmBW-AmKnKGnEg8qanKwtoP76u8qxQoXjCb91OBqZbQLsr4zRM9WUpBr9w5iGZL668__-C8S7LDj-0nfljMmyL9NLQuKMYsCwPcjtfqbuHF8sbOsKoeyNC-kkXOQ5wnl",

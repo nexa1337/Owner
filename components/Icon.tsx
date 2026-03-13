@@ -13,7 +13,8 @@ import {
   TbBrandWindows, TbBrandXbox, TbBrandTiktok, TbSitemap, TbFaceId,
   TbUser, TbLock, TbKey, TbUsers, TbBrandDiscord, TbPin, TbAlertTriangle,
   TbLoader, TbSend, TbCopy, TbGhost, TbShoppingCart,
-  TbBold, TbItalic, TbList, TbCheckbox, TbGridDots, TbSearch, TbCalculator, TbBulb, TbSparkles, TbRefresh
+  TbBold, TbItalic, TbList, TbCheckbox, TbGridDots, TbSearch, TbCalculator, TbBulb, TbSparkles, TbRefresh, TbInfoCircle,
+  TbTarget, TbEye
 } from 'react-icons/tb';
 
 import {
@@ -48,6 +49,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Minus: TbMinus,
   Download: TbDownload,
   ExternalLink: TbExternalLink,
+  Info: TbInfoCircle,
   Network: TbNetwork,
   Image: TbPhoto,
   Images: TbPhoto,
@@ -193,7 +195,9 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Calculator: TbCalculator,
   Bulb: TbBulb,
   Sparkles: TbSparkles,
-  RefreshCw: TbRefresh
+  RefreshCw: TbRefresh,
+  Target: TbTarget,
+  Eye: TbEye
 };
 
 const Icon: React.FC<IconProps> = ({ name, size = 24, className }) => {

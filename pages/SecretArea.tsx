@@ -783,15 +783,155 @@ const RecentProductsCarousel: React.FC<{ items: ResourceItem[], loading: boolean
     );
 };
 
+const HypervisorGuideModal: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
+  if (!open) return null;
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[400] flex items-center justify-center bg-black/90 backdrop-blur-md p-4"
+      onClick={(e) => { e.stopPropagation(); onClose(); }}
+    >
+      <motion.div 
+        initial={{ scale: 0.9, y: 20 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.9, y: 20 }}
+        className="bg-white dark:bg-slate-900 w-full h-full max-w-5xl max-h-[90vh] rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
+          <div className="flex items-center gap-4">
+            <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors font-bold text-sm">
+              <Icon name="ArrowLeft" size={16} /> Back to Product
+            </button>
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-3">
+              <Icon name="ShieldAlert" size={28} className="text-red-500" />
+              Hypervisor Guide
+            </h2>
+          </div>
+          <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="p-2 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
+            <Icon name="X" size={24} />
+          </button>
+        </div>
+        <div className="p-6 overflow-y-auto flex-1 prose dark:prose-invert max-w-none text-slate-700 dark:text-slate-300">
+          <article id="post-74689" className="post-74689 page type-page status-publish hentry">
+            <div className="entry-content space-y-4">
+              <p><span style={{ color: 'red' }} className="font-bold">This page is a work-in-progress and will be updated.</span></p>
+              <p>This article is partially based on RessourectoR’s (admin of cs.rin.ru site) article:</p>
+              <p><a href="https://cs.rin.ru/forum/viewtopic.php?f=10&amp;t=156407" target="_blank" style={{ fontSize: '20px' }} rel="noopener" className="text-blue-500 hover:underline break-all">https://cs.rin.ru/forum/viewtopic.php?f=10&amp;t=156407</a></p>
+              <p>I highly recommend to open and read it at least one time. It’s more complex than this page and covers more security topics.</p>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-6 mb-3">What are Hypervisor Cracks?</h3>
+              <p>Denuvo Hypervisor Crack or Bypass refers to advanced techniques that leverage virtualization at a very low level (often using a custom or modified hypervisor) to interfere with how the protection monitors the system. Denuvo relies heavily on integrity checks, timing analysis, and detection of debugging or emulation environments. A hypervisor-based approach allows an attacker to sit “under” the operating system, transparently controlling CPU behavior, intercepting instructions, and masking signs of analysis without modifying the protected executable directly.</p>
+              <p>Instead of patching the game binary, the hypervisor can emulate or alter specific CPU instructions, fake timing results, or hide breakpoints and memory changes, effectively tricking Denuvo into believing everything is running on a normal, untampered system. This makes the protection much harder to detect or react to, since its checks are being handled outside its visibility. These methods are extremely complex and are typically explored by highly skilled reverse engineers, as they require deep knowledge of CPU virtualization, kernel internals, and anti-tamper mechanisms.</p>
+              <p>Officially, only signed drivers can work at such low level. Due to the piracy nature of Denuvo Hypervisor drivers, they will never receive Microsoft-approved certificate. And that’s why to use such “cracks” you need to make certain modifications to your system security settings, listed below. Please note, that those changes are intended to be made temporary, for the course of your gameplay session and then should be reverted after you quit the game.</p>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-6 mb-3">Windows virtualization-based security components</h3>
+              <p>On modern systems with Secure Boot, TPM 2.0 and hardware-assisted virtualization capabilities, Windows 10 and 11 enable, mostly* by default, various security solutions via Virtualization-based Security (VBS). VBS is an umbrella term for using a bare-metal hypervisor, the Windows hypervisor, to create isolated virtual spaces that are safe from even a fully compromised OS, in which these security components run and monitor the OS or store confidential information.</p>
+              <p>The following Windows components are such security solutions:</p>
+              <ul className="list-disc pl-6 space-y-2">
+                <li><a href="https://learn.microsoft.com/en-us/windows/security/hardware-security/enable-virtualization-based-protection-of-code-integrity" target="_blank" rel="noopener" className="text-blue-500 hover:underline">Memory Integrity (HVCI)</a>: Runs checks to detect malicious or at least unexpected modifications of Windows kernel code and restricts suspicious kernel memory allocations. For example, RessourectoR imagines this could protect against malicious software that is being run with administrative privileges and attempts to modify system files, or against memory security vulnerabilities in user-run applications.</li>
+                <li><a href="https://learn.microsoft.com/en-us/windows-hardware/design/device-experiences/oem-credential-guard" target="_blank" rel="noopener" className="text-blue-500 hover:underline">Credential Guard</a>: Stores access credentials, such as passwords, authentication data, biometric data etc. in an isolated environment.</li>
+                <li><a href="https://learn.microsoft.com/en-us/windows-hardware/design/device-experiences/windows-hello" target="_blank" rel="noopener" className="text-blue-500 hover:underline">Windows Hello</a>: Allows you to log in with convenient methods like a short PIN, facial recognition or fingerprint scan. RessourectoR has not found a direct source for this, but it probably prefers Credential Guard to store its highly sensitive data. The login methods it provides tend to break when some of the components above are disabled. It is also protected by System Guard, if that is enabled.</li>
+                <li><a href="https://learn.microsoft.com/en-us/windows/security/hardware-security/how-hardware-based-root-of-trust-helps-protect-windows" target="_blank" rel="noopener" className="text-blue-500 hover:underline">System Guard (Secure Launch)</a>: An advanced system hardening framework that protects the OS boot process and <a href="https://en.wikipedia.org/wiki/System_Management_Mode" target="_blank" rel="noopener" className="text-blue-500 hover:underline">System Management Mode</a> (SMM, commonly used by the BIOS to run hardware configuration software) from (arguably sophisticated) rootkits. Such rootkits could compromise the hypervisor itself, so this protection is assisted by various hardware security features of modern processors. Backed by TPM 2.0, this also allows to monitor system integrity, including the other security components mentioned here, after boot continuously and verify it from a remote system.</li>
+                <li>From what RessourectoR could find, this is cutting edge and not enabled by default.</li>
+              </ul>
+              <p>* Even though hardware and boot requirements are met, Windows sometimes seems to fail at enabling features that are supposed to be enabled automatically, such as VBS and memority integrity.</p>
+              <p className="font-bold mt-4">Without the Windows hypervisor, none of these security features can be used. By design, the hypervisor cannot be disabled directly. Instead, all the above features that want to utilize VBS signal that it needs to be enabled, which then loads the hypervisor. Therefore, we must disable all those features to prevent the Windows hypervisor from being loaded.</p>
+              <p className="font-bold">A boot option that prevents Hyper-V from loading the hypervisor also needs to be added.</p>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-6 mb-3">I want to play that new Denuvo-protected game, is it safe to disable all this and use a hypervisor crack?</h3>
+              <p>There is no simple answer. This is RessourectoR’s personal take as someone with 10 years of experience in security-focused system administration and only a casual interest in gaming.</p>
+              <p>It’s true that the most common threats are info stealer malware from fake download buttons, ransomware that encrypts your files or joining a DDoS botnet. It’s supposed such malware is usually not interested in higher privilege escalation or hardware sabotage, if it can already access what it needs. It’s also true that the best protection against such malware is a good ad blocker, staying on trusted sites and user education.</p>
+              <p>More experienced PC users develop a false sense of security from seeing how successfully they avoid malware infection by “being smart”. They argue that they don’t need all these restrictive, patronizing security features and AVs that just annoy with false positives, because their malware-free track record “proves” that they know better. They also argue that more advanced threats are not aimed at home users, but corporate networks and too unlikely to care about. Especially relevant for gamers: Virtualization can reduce system performance and whether that is noticeable or not is also a point of contention.</p>
+              <p>The other side of the argument: You would be disabling technology that evolved from decades of security research, ignoring what experts consider necessary nowadays. You would willingly give up protections against common classes of software vulnerabilities and if you ever do get a more advanced malware, it can breeze right through so that your PC can stay part of a botnet for eternity or spread to more local network devices more easily. If a lot of people remove these protections – especially DSE and memory integrity – for gaming, one of the main use cases of Windows PCs at home, it might be worth the effort for malware authors to target such setups. Widespread usage of HV cracks could encourage manipulated fake releases, because people who download those can be expected to disable all protection, including AV exclusion. The knowledge and effort required to take precautions and verify files properly is higher than with common threats and the potential consequences much more severe.</p>
+              <p>Aside from the disabled Windows features, even if you trust the authors of the hypervisor driver and even compile it yourself from source, a serious vulnerability in its code could instantly provide maximum and undetectable access to your system.</p>
+              <p className="font-bold">Whether that game is worth the risks is something you will ultimately have to decide for yourself.</p>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-6 mb-3">What’s inside those cracks?</h3>
+              <p>Basically, every modern Hypervisor bypass/crack consists of two parts:</p>
+              <ol className="list-decimal pl-6 space-y-4">
+                <li>
+                  VBS.cmd: special command-line script, which checks your existing settings and modify them to make your system prepared for HV-cracks.
+                  <p className="mt-2">This script is universal for all HV-games and is developed separately, it doesn’t depend on actual game cracks. You can download the latest version below:</p>
+                  <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-5 my-4">
+                    <a href="https://paste.fitgirl-repacks.site/?7bcd452c6412ca8a#7hF2cQmiRvFNqKWFmtUCF9D6k9MG9bFFZRfdgEUoy2Xm" target="_blank" rel="noopener" className="text-green-600 dark:text-green-400 font-bold hover:underline">Current version: v1.4 (Updated on March 26, 2026)</a>
+                    <div className="mt-4">
+                      <div className="font-bold mb-2">Changes log:</div>
+                      <div className="text-sm space-y-2">
+                        <p className="font-bold">v1.4</p>
+                        <ol className="list-decimal pl-5 space-y-1">
+                          <li>Added Driver Signature Enforcement (DSE) and test signing detection. If test signing is already enabled, the script will skip the Startup Settings step, BitLocker suspension, and onetimeadvancedoptions entirely, as driver signature enforcement is already bypassed.</li>
+                          <li>Fixed an issue where the Revert Changes option would incorrectly show “Nothing to revert, as no changes were previously applied.” when DSE was still disabled, even though a reboot was required to restore it.</li>
+                          <li>Added FACEIT Anti-Cheat detection. If detected, the script will exit with a message asking the user to uninstall it before proceeding, as it is known to block the driver from loading.</li>
+                          <li>Replaced PowerShell calls with full path via %psc% to avoid resolution issues when PowerShell is not in PATH.</li>
+                          <li>Removed outdated comments.</li>
+                          <li>Minor improvements.</li>
+                          <li>We rely on user reports to identify and fix issues. If you encounter any problems, please report them at <a href="https://cs.rin.ru/forum/viewtopic.php?f=14&amp;t=156435" className="text-blue-500 hover:underline">https://cs.rin.ru/forum/viewtopic.php?f=14&amp;t=156435</a></li>
+                        </ol>
+                        <p className="font-bold mt-3">v1.3</p>
+                        <ol className="list-decimal pl-5 space-y-1">
+                          <li>Fixed an issue where Credential Guard Scenarios registry key was being restored on revert even when Credential Guard itself was not running before the script was executed. CG and CG Scenarios are now tracked and reverted independently.</li>
+                          <li>Fixed an issue where Memory Integrity (HVCI) would not be detected if it was configured but not yet running, which could keep VBS active. HVCI detection now checks both runtime status and registry configuration.</li>
+                          <li>Added detection and removal of RequirePlatformSecurityFeatures when disabling VBS, which was causing VBS to remain enabled. The original value is backed up and restored accurately on revert.</li>
+                          <li>Added detection and removal of the Enhanced Sign-in Security Scenarios key alongside the existing subkey, and reverts them independently.</li>
+                          <li>Added a message informing the user when no security features needed to be disabled.</li>
+                          <li>Minor improvements.</li>
+                        </ol>
+                        <p className="font-bold mt-3">v1.2</p>
+                        <ol className="list-decimal pl-5 space-y-1">
+                          <li>Fixed a compatibility issue where launching the script from a 32-bit application, like Compact AutoRunner which is used in Hypervisor Launcher by FitGirl, would cause system tools such as bcdedit to not be found, due to System32 being redirected to SysWOW64 in 32-bit processes. This manifested as the Windows hypervisor showing as failed to disable, and UEFI lock removal failing entirely. The script now relaunches itself as a 64-bit process when this is detected. Thanks to galaxyxyz888 on Discord.</li>
+                          <li>Fixed an issue where the Credential Guard Scenarios registry key was not being disabled, which could keep VBS active even when Credential Guard was not running. Thanks to sowhatnumber on Discord.</li>
+                          <li>Fixed an issue where SecConfig.efi would not correctly return to the current OS after clearing a UEFI lock on dual-boot systems. Thanks to RessourectoR.</li>
+                          <li>Fixed an issue where reverting the Windows hypervisor would incorrectly show as failed after a reboot on systems with UEFI locked VBS or HVCI, caused by SecConfig.efi clearing the hypervisorlaunchtype BCD entry during the UEFI lock removal process on boot.</li>
+                          <li>Fixed an issue where the Revert Changes option would not show “No changes have been made” on systems that had previously agreed to UEFI lock removal, even when no features had actually been disabled, due to the UEFILockAgreed registry value being incorrectly counted as a tracked change.</li>
+                          <li>Fixed an issue where the ManageVBS registry key was not being cleaned up correctly after reverting on systems that had agreed to UEFI lock removal.</li>
+                          <li>Added test signing detection. If test signing is already enabled, the script will inform the user.</li>
+                          <li>Minor visual improvements.</li>
+                        </ol>
+                        <p className="font-bold mt-3">v1.1</p>
+                        <ol className="list-decimal pl-5 space-y-1">
+                          <li>Fixed a crash when the script path or filename contained spaces or special characters, such as when downloaded multiple times and renamed to VBS (1).cmd.</li>
+                          <li>Fixed an issue where Enhanced Sign-in Security was preventing VBS from being disabled. A check has been added to disable it if detected. This mainly affected ROG Ally X users where it is enabled by default. Thanks to .oathkeeper213 on Discord and Azazel35 on Reddit.</li>
+                          <li>Added support for disabling VBS, HVCI and Credential Guard when protected by a UEFI lock using SecConfig.efi. In the script, the user is advised to only proceed on personal devices before removing the UEFI lock. Note that on managed devices, VBS, HVCI and Credential Guard protected by a UEFI lock can only be disabled for one boot cycle. UEFI locks can be fully reverted using the Revert Changes option. Thanks to poce on Discord.</li>
+                          <li>Added support for disabling VBS and HVCI mandatory mode. Note that reverting mandatory mode is not currently supported and must be re-enabled manually if needed.</li>
+                          <li>Added a note in the script’s introduction regarding compatibility issues with kernel anti-cheats, specifically Vanguard, where disabling driver signature enforcement would result in a bug check (BSOD) in some system configurations, and FACEIT Anti-Cheat, which prevented the driver from loading with a multitude of different errors, most notably ERROR_ACCESS_DENIED, ERROR_INVALID_BLOCK and ERROR_NO_SYSTEM_RESOURCES. Thanks to xyz2theb on Reddit, deviljin0500, faintx11 &amp; xeros1 on Discord for reporting this.</li>
+                          <li>Updated introductory notes.</li>
+                          <li>Minor visual improvements.</li>
+                        </ol>
+                      </div>
+                    </div>
+                  </div>
+                </li>
+                <li>
+                  The Crack/Bypass itself
+                  <p className="mt-2">Consists of EXEs/DLLs, which does the actual Denuvo bypassing + other additional DLLs, like Goldberg Steam emulator to get past the underlying Steam protection.</p>
+                  <p className="mt-2">Those files work only for specific game versions, for which they were made. They won’t work on different game version or other games.</p>
+                </li>
+              </ol>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-6 mb-3">Pre-requirements</h3>
+              <p>Your CPU must support one of two virtualization techniques: VT-x for Intel and AMD-V (SVM) for AMD.</p>
+              <p>Google if CPU model supports virtualization to know if you can play HV-games.</p>
+              <p>Before proceeding with HV cracks, check your BIOS for enabling those technologies.</p>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-6 mb-3">Do I need to disable Secure Boot or use EfiGuard?</h3>
+              <p>No. Current HV bypasses do not require those changes.</p>
+            </div>
+          </article>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
 const ResourceDetailModal: React.FC<{ 
   item: ResourceItem; 
   onClose: () => void;
-}> = ({ item, onClose }) => {
+  isHypervisor?: boolean;
+}> = ({ item, onClose, isHypervisor }) => {
   const [activeImage, setActiveImage] = useState(item.coverImage);
   const [showTrailer, setShowTrailer] = useState(false);
   const [translatedDesc, setTranslatedDesc] = useState<string | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
   const [showArabic, setShowArabic] = useState(false);
+  const [showHypervisorGuide, setShowHypervisorGuide] = useState(false);
 
   useEffect(() => {
     setActiveImage(item.galleryImages.length > 0 ? item.galleryImages[0] : item.coverImage);
@@ -891,6 +1031,18 @@ const ResourceDetailModal: React.FC<{
                             allowFullScreen
                         ></iframe>
                     </motion.div>
+                ) : activeImage.endsWith('.webm') || activeImage.endsWith('.mp4') ? (
+                    <motion.video
+                        key={activeImage}
+                        initial={{ opacity: 0, scale: 1.05 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        src={activeImage}
+                        autoPlay
+                        controls
+                        className="max-w-full max-h-full object-contain shadow-2xl z-10"
+                    />
                 ) : (
                     <motion.img 
                         key={activeImage}
@@ -1073,6 +1225,19 @@ const ResourceDetailModal: React.FC<{
                    </Section>
                 )}
 
+                {isHypervisor && (
+                   <Section title="What is a Hypervisor Bypass?">
+                      <div className="p-4 bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-200 dark:border-red-900/30">
+                        <p className="text-sm text-red-800 dark:text-red-300 font-medium">
+                          Please read this article before proceeding with downloading and installation: 
+                          <button onClick={(e) => { e.stopPropagation(); setShowHypervisorGuide(true); }} className="ml-1 text-red-600 dark:text-red-400 underline font-bold hover:text-red-500 transition-colors">
+                            https://fitgirl-repacks.site/hypervisor-guide/
+                          </button>
+                        </p>
+                      </div>
+                   </Section>
+                )}
+
                 <Section title="Download Channels">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                         {item.links.full && (
@@ -1137,6 +1302,11 @@ const ResourceDetailModal: React.FC<{
             </div>
         </div>
       </motion.div>
+      <AnimatePresence>
+        {showHypervisorGuide && (
+          <HypervisorGuideModal open={showHypervisorGuide} onClose={() => setShowHypervisorGuide(false)} />
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
@@ -1174,11 +1344,23 @@ const Section: React.FC<{ title: string; children: React.ReactNode; action?: Rea
   </div>
 );
 
-const Thumbnail: React.FC<{ src: string; isActive: boolean; onClick: () => void }> = ({ src, isActive, onClick }) => (
-  <button onClick={onClick} className={`relative aspect-square h-full rounded-lg overflow-hidden border-2 transition-all shrink-0 ${isActive ? 'border-primary-500 scale-105 opacity-100' : 'border-transparent opacity-50 hover:opacity-100'}`}>
-    <img src={src} alt="thumb" className="w-full h-full object-cover" />
-  </button>
-);
+const Thumbnail: React.FC<{ src: string; isActive: boolean; onClick: () => void }> = ({ src, isActive, onClick }) => {
+  const isVideo = src.endsWith('.webm') || src.endsWith('.mp4');
+  return (
+    <button onClick={onClick} className={`relative aspect-square h-full rounded-lg overflow-hidden border-2 transition-all shrink-0 ${isActive ? 'border-primary-500 scale-105 opacity-100' : 'border-transparent opacity-50 hover:opacity-100'}`}>
+      {isVideo ? (
+        <video src={src} className="w-full h-full object-cover" muted loop playsInline />
+      ) : (
+        <img src={src} alt="thumb" className="w-full h-full object-cover" />
+      )}
+      {isVideo && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+          <Icon name="Play" size={16} className="text-white opacity-80" />
+        </div>
+      )}
+    </button>
+  );
+};
 
 const DownloadButton: React.FC<{ label: string; sub: string; href: string; icon: string; secondary?: boolean; note?: string }> = ({ label, sub, href, icon, secondary, note }) => (
   <a href={href} target="_blank" rel="noreferrer" className={`group flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl border transition-all active:scale-95 hover:-translate-y-1 ${secondary ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-900 dark:hover:text-white' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 hover:border-primary-500/50 hover:text-primary-600 dark:hover:text-white'}`}>
@@ -1198,11 +1380,14 @@ const DownloadButton: React.FC<{ label: string; sub: string; href: string; icon:
 
 const SecretArea: React.FC = () => {
   const [isUnlocked, setIsUnlocked] = useState(() => localStorage.getItem('secret_area_unlocked') === 'true');
+  const [showHackerLoader, setShowHackerLoader] = useState(() => localStorage.getItem('secret_area_unlocked') === 'true');
+  const [hackerProgress, setHackerProgress] = useState(0);
+  const [terminalLines, setTerminalLines] = useState<string[]>([]);
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [allResources, setAllResources] = useState<Record<string, ResourceItem[]>>({ game: [], steamtools: [], architect: [], extra: [] });
-  const [activeTab, setActiveTab] = useState<'game' | 'steamtools' | 'architect' | 'extra'>('game');
+  const [allResources, setAllResources] = useState<Record<string, ResourceItem[]>>({ game: [], hypervisor: [], steamtools: [], architect: [], extra: [] });
+  const [activeTab, setActiveTab] = useState<'game' | 'hypervisor' | 'steamtools' | 'architect' | 'extra'>('game');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedResource, setSelectedResource] = useState<ResourceItem | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -1221,7 +1406,7 @@ const SecretArea: React.FC = () => {
 
   const recentProducts = useMemo(() => {
     const recent: ResourceItem[] = [];
-    ['game', 'steamtools', 'architect', 'extra'].forEach(cat => {
+    ['game', 'hypervisor', 'steamtools', 'architect', 'extra'].forEach(cat => {
         const items = allResources[cat] || [];
         const catRecent = [...items].reverse().slice(0, 10);
         recent.push(...catRecent);
@@ -1258,6 +1443,62 @@ const SecretArea: React.FC = () => {
         }
     }
   }, []);
+
+  useEffect(() => {
+    if (showHackerLoader) {
+      setHackerProgress(0);
+      setTerminalLines([]);
+      
+      const lines = [
+        "INIT: SECURE_PROTOCOL_V4",
+        "CONNECTING TO MAINFRAME...",
+        "BYPASSING FIREWALL...",
+        "ACCESS GRANTED.",
+        "DECRYPTING VAULT CONTENTS...",
+        "SYNCING ASSETS...",
+        "VERIFYING CHECKSUMS...",
+        "FINALIZING..."
+      ];
+      let lineIndex = 0;
+
+      const interval = setInterval(() => {
+        setHackerProgress(prev => {
+          let nextProgress = prev;
+          
+          if (loading && prev >= 90) {
+            nextProgress = 90;
+          } else if (prev >= 100) {
+            clearInterval(interval);
+            setTimeout(() => setShowHackerLoader(false), 1200);
+            nextProgress = 100;
+          } else if (!loading && prev >= 90) {
+            nextProgress = Math.min(100, prev + 5);
+          } else {
+            nextProgress = Math.min(100, prev + Math.floor(Math.random() * 15) + 5);
+          }
+
+          if (nextProgress > lineIndex * 12 && lineIndex < lines.length) {
+            setTerminalLines(current => {
+              const newLines = [...current, `> ${lines[lineIndex]}`];
+              return newLines.slice(-4); // Keep only last 4 lines
+            });
+            lineIndex++;
+          }
+          
+          if (nextProgress === 100 && lineIndex === lines.length) {
+            setTerminalLines(current => {
+              const newLines = [...current, "> SYNC COMPLETE. WELCOME."];
+              return newLines.slice(-4);
+            });
+            lineIndex++;
+          }
+
+          return nextProgress;
+        });
+      }, 150);
+      return () => clearInterval(interval);
+    }
+  }, [showHackerLoader, loading]);
 
   const handleCloseDisclaimer = () => {
     setShowDisclaimer(false);
@@ -1478,17 +1719,20 @@ const SecretArea: React.FC = () => {
           setSteamAccounts([]);
       }
 
-      const transformed: Record<string, ResourceItem[]> = { game: [], steamtools: [], architect: [], extra: [] };
+      const transformed: Record<string, ResourceItem[]> = { game: [], hypervisor: [], steamtools: [], architect: [], extra: [] };
       Object.keys(data).forEach(tabKey => {
         const normalizedKey = tabKey.toLowerCase();
+        let targetKey = '';
         let idPrefix = '';
-        if (normalizedKey.includes('game')) idPrefix = 'G';
-        else if (normalizedKey.includes('steamtools')) idPrefix = 'S';
-        else if (normalizedKey.includes('architect')) idPrefix = 'A';
-        else if (normalizedKey.includes('extra')) idPrefix = 'E';
+        
+        if (normalizedKey.includes('hypervisor')) { targetKey = 'hypervisor'; idPrefix = 'H'; }
+        else if (normalizedKey.includes('game')) { targetKey = 'game'; idPrefix = 'G'; }
+        else if (normalizedKey.includes('steamtools')) { targetKey = 'steamtools'; idPrefix = 'S'; }
+        else if (normalizedKey.includes('architect')) { targetKey = 'architect'; idPrefix = 'A'; }
+        else if (normalizedKey.includes('extra')) { targetKey = 'extra'; idPrefix = 'E'; }
 
-        if (transformed.hasOwnProperty(normalizedKey)) {
-          transformed[normalizedKey] = data[tabKey].map((row: any, idx: number) => {
+        if (targetKey && transformed.hasOwnProperty(targetKey)) {
+          transformed[targetKey] = data[tabKey].map((row: any, idx: number) => {
             // Robust access: check both lower and original casing
             const getVal = (key: string) => row[key] || row[key.charAt(0).toUpperCase() + key.slice(1)] || '';
             
@@ -1565,7 +1809,7 @@ const SecretArea: React.FC = () => {
 
             return {
               id: `${idPrefix}${row.id || (idx + 1)}`,
-              category: normalizedKey,
+              category: targetKey,
               name: getVal('name') || 'Secure Fragment',
               version: getVal('version') || 'v1.0',
               repackSize: getVal('repackSize') || 'N/A',
@@ -1599,6 +1843,15 @@ const SecretArea: React.FC = () => {
           });
         }
       });
+      
+      if (transformed.hypervisor) {
+        transformed.hypervisor.forEach(item => {
+          if (!item.galleryImages.includes('https://video.fastly.steamstatic.com/store_trailers/3764200/815862212/4efe995ecf4dcfe126a49f4f404548dd89978d77/1750378480/microtrailer.webm')) {
+             item.galleryImages.unshift('https://video.fastly.steamstatic.com/store_trailers/3764200/815862212/4efe995ecf4dcfe126a49f4f404548dd89978d77/1750378480/microtrailer.webm');
+          }
+        });
+      }
+
       setAllResources(transformed);
     } catch (err: any) {
       console.error("Fetch Error:", err);
@@ -1636,6 +1889,8 @@ const SecretArea: React.FC = () => {
     e.preventDefault();
     if (password === 'Wolfspace') {
       setIsUnlocked(true);
+      setShowHackerLoader(true);
+      setHackerProgress(0);
       localStorage.setItem('secret_area_unlocked', 'true');
     } else {
       setError('AUTHORIZATION FAILED');
@@ -1881,7 +2136,118 @@ const SecretArea: React.FC = () => {
   return (
     <div className="w-full min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-200 selection:bg-primary-500/30 transition-colors duration-300 overflow-x-hidden">
       
-      <div className="fixed top-24 right-4 z-[300] flex flex-col gap-2 pointer-events-none">
+      <AnimatePresence>
+        {showHackerLoader && (
+          <motion.div
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0, transition: { duration: 0.8, ease: "easeInOut" } }}
+            className="fixed inset-0 z-[9999] bg-slate-950 flex flex-col items-center justify-center p-4 overflow-hidden"
+          >
+            {/* Modern Background Elements */}
+            <div className="absolute inset-0 z-0 pointer-events-none">
+               <motion.div 
+                 animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1] }} 
+                 transition={{ duration: 8, repeat: Infinity }}
+                 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary-500/10 rounded-full blur-[120px]"
+               />
+               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.05]"></div>
+               
+               {/* Grid overlay */}
+               <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_80%_80%_at_50%_50%,#000_20%,transparent_100%)]"></div>
+            </div>
+            
+            <div className="relative z-10 w-full max-w-lg flex flex-col items-center">
+              {/* Logo / Icon */}
+              <div className="relative mb-10 w-32 h-32 flex items-center justify-center">
+                <motion.div 
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-0 border border-dashed border-primary-500/40 rounded-full"
+                />
+                <motion.div 
+                  animate={{ rotate: -360 }}
+                  transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-3 border border-indigo-500/30 rounded-full"
+                />
+                <motion.div 
+                  animate={{ scale: [1, 1.1, 1], opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  className="absolute inset-6 bg-primary-500/10 rounded-full blur-md"
+                />
+                <div className="w-20 h-20 bg-slate-900 border border-primary-500/60 rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(14,165,233,0.3)] relative z-10">
+                  <Icon name="ShieldAlert" size={32} className="text-primary-400 animate-pulse" />
+                </div>
+              </div>
+
+              <h2 className="text-white text-2xl md:text-3xl font-black tracking-[0.3em] uppercase mb-4 text-center relative">
+                <span className="relative z-10">Secret Vault</span>
+                <motion.span 
+                  animate={{ opacity: [0, 1, 0], x: [-5, 5, -5] }}
+                  transition={{ duration: 0.2, repeat: Infinity, repeatType: "mirror" }}
+                  className="absolute inset-0 text-primary-500 opacity-50 blur-[2px] -z-10"
+                >
+                  Secret Vault
+                </motion.span>
+              </h2>
+              
+              {/* Terminal Output */}
+              <div className="w-full bg-black/50 border border-primary-500/20 rounded-lg p-4 mb-8 h-32 flex flex-col justify-end overflow-hidden relative backdrop-blur-sm">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary-500/50 to-transparent opacity-50"></div>
+                {terminalLines.map((line, i) => (
+                  <motion.div 
+                    key={i}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="text-primary-400 font-mono text-xs md:text-sm mb-1"
+                  >
+                    {line}
+                  </motion.div>
+                ))}
+                <motion.div 
+                  animate={{ opacity: [0, 1, 0] }}
+                  transition={{ duration: 0.8, repeat: Infinity }}
+                  className="w-2 h-4 bg-primary-500 mt-1"
+                />
+              </div>
+              
+              {/* Progress Bar */}
+              <div className="w-full relative">
+                <div className="w-full h-2 bg-slate-800/80 rounded-full overflow-hidden relative border border-slate-700/50 backdrop-blur-sm">
+                  <motion.div 
+                    className="absolute top-0 left-0 h-full bg-gradient-to-r from-indigo-600 via-primary-500 to-cyan-400"
+                    initial={{ width: "0%" }}
+                    animate={{ width: `${hackerProgress}%` }}
+                    transition={{ duration: 0.1 }}
+                  />
+                  {/* Glare effect on progress bar */}
+                  <motion.div 
+                    className="absolute top-0 bottom-0 w-20 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                    animate={{ left: ["-20%", "120%"] }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                  />
+                </div>
+                
+                <div className="w-full flex justify-between mt-4 text-slate-400 font-mono text-[10px] md:text-xs uppercase tracking-widest">
+                  <span className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-ping"></span>
+                    SYS.SYNC.ACTIVE
+                  </span>
+                  <span className="text-primary-400 font-bold">{hackerProgress}%</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {!showHackerLoader && (
+        <motion.div 
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }} 
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="w-full"
+        >
+          <div className="fixed top-24 right-4 z-[300] flex flex-col gap-2 pointer-events-none">
         <AnimatePresence>
             {notifications.map(n => (
                 <motion.div
@@ -1916,6 +2282,7 @@ const SecretArea: React.FC = () => {
           <ResourceDetailModal 
             item={selectedResource} 
             onClose={() => setSelectedResource(null)} 
+            isHypervisor={selectedResource.category === 'hypervisor'}
           />
         )}
       </AnimatePresence>
@@ -2090,7 +2457,7 @@ const SecretArea: React.FC = () => {
            <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-800 p-2 rounded-2xl shadow-2xl flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between transition-all">
               
               <div className="grid grid-cols-2 sm:flex p-1 bg-slate-100 dark:bg-slate-950 rounded-xl w-full lg:w-auto gap-1 sm:gap-0 shrink-0">
-                {(['game', 'steamtools', 'architect', 'extra'] as const).map(tab => (
+                {(['game', 'hypervisor', 'steamtools', 'architect', 'extra'] as const).map(tab => (
                   <button 
                       key={tab}
                       onClick={() => setActiveTab(tab)}
@@ -2099,7 +2466,16 @@ const SecretArea: React.FC = () => {
                     {activeTab === tab && (
                       <motion.div layoutId="activeTab" className="absolute inset-0 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700" transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} />
                     )}
-                    <span className="relative z-10">{tab}</span>
+                    <span className="relative z-10 flex items-center gap-1.5">
+                      {tab === 'hypervisor' ? (
+                        <>
+                          GAME
+                          <span className="bg-red-600 text-white px-1.5 py-0.5 rounded-md text-[8px] sm:text-[9px] font-black tracking-widest shadow-sm">
+                            HYPERVISOR
+                          </span>
+                        </>
+                      ) : tab}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -2200,15 +2576,22 @@ const SecretArea: React.FC = () => {
                                     )}
                                 </>
                             ) : (
-                                <div className="absolute top-3 right-3 px-2 py-1 bg-white/90 dark:bg-black/60 backdrop-blur-md rounded-md border border-slate-200 dark:border-white/10 text-[10px] font-mono font-bold text-primary-600 dark:text-primary-400">
+                                <div className={`absolute top-3 right-3 px-2 py-1 bg-white/90 dark:bg-black/60 backdrop-blur-md rounded-md border border-slate-200 dark:border-white/10 text-[10px] font-mono font-bold text-primary-600 dark:text-primary-400`}>
                                     {item.repackSize}
                                 </div>
                             )}
                             <div className={`absolute top-3 ${item.isPinned ? 'left-12' : 'left-3'} px-2 py-1 bg-primary-600 text-white rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg transition-all`}>
                               {item.id}
                             </div>
+                            {item.category === 'hypervisor' && (
+                                <div className={`absolute top-10 right-3 z-20`}>
+                                    <div className="bg-red-600 text-white px-2 py-1 rounded-lg shadow-lg border border-red-400/30 text-[10px] font-black tracking-widest">
+                                        HV
+                                    </div>
+                                </div>
+                            )}
                             {item.isFree && (
-                                <div className="absolute top-10 right-3 px-2 py-1 bg-emerald-500 text-white rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1 z-20">
+                                <div className={`absolute ${item.category === 'hypervisor' ? 'top-20' : 'top-10'} right-3 px-2 py-1 bg-emerald-500 text-white rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1 z-20`}>
                                     <Icon name="Tag" size={12} /> Free
                                 </div>
                             )}
@@ -2298,6 +2681,8 @@ const SecretArea: React.FC = () => {
         </div>
 
       </div>
+      </motion.div>
+      )}
     </div>
   );
 };

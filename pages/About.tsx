@@ -212,6 +212,7 @@ const About: React.FC = () => {
             { name: 'N E X A 1337', url: 'https://nexa1337.github.io/nexa1337', clicks: '342,150', icon: 'Globe' },
             { name: 'N E X A 1337 - Portfolio', url: 'https://nexa1337.github.io/Owner', clicks: '128,400', icon: 'Briefcase' },
             { name: 'N E X A 1337 - Tool', url: 'https://nexa1337.github.io/tool', clicks: '215,890', icon: 'Wrench' },
+            { name: 'N E X A 1337 - Tool v2', url: 'https://nexa1337.github.io/toolv2', clicks: 'New', icon: 'Wrench' },
             { name: 'N E X A 1337 - Digital Store', url: 'https://nexa1337.github.io/digitalstore', clicks: '310,200', icon: 'ShoppingCart' },
           ].map((link, idx) => (
             <motion.a

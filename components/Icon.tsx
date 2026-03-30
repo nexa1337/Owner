@@ -12,7 +12,7 @@ import {
   TbBrandLinkedin, TbBrandGithub, TbBrandX, TbBug, TbDatabase, TbRocket, TbHelp,
   TbBrandWindows, TbBrandXbox, TbBrandTiktok, TbSitemap, TbFaceId,
   TbUser, TbLock, TbKey, TbUsers, TbBrandDiscord, TbPin, TbAlertTriangle,
-  TbLoader, TbSend, TbCopy, TbGhost, TbShoppingCart,
+  TbLoader, TbSend, TbCopy, TbGhost, TbShoppingCart, TbShieldExclamation,
   TbBold, TbItalic, TbList, TbCheckbox, TbGridDots, TbSearch, TbCalculator, TbBulb, TbSparkles, TbRefresh, TbInfoCircle,
   TbTarget, TbEye
 } from 'react-icons/tb';
@@ -114,6 +114,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Discord: TbBrandDiscord,
   Pin: TbPin,
   AlertTriangle: TbAlertTriangle,
+  ShieldAlert: TbShieldExclamation,
   Loader: TbLoader,
   Send: TbSend,
   Copy: TbCopy,

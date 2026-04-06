@@ -1844,14 +1844,6 @@ const SecretArea: React.FC = () => {
         }
       });
       
-      if (transformed.hypervisor) {
-        transformed.hypervisor.forEach(item => {
-          if (!item.galleryImages.includes('https://video.fastly.steamstatic.com/store_trailers/3764200/815862212/4efe995ecf4dcfe126a49f4f404548dd89978d77/1750378480/microtrailer.webm')) {
-             item.galleryImages.unshift('https://video.fastly.steamstatic.com/store_trailers/3764200/815862212/4efe995ecf4dcfe126a49f4f404548dd89978d77/1750378480/microtrailer.webm');
-          }
-        });
-      }
-
       setAllResources(transformed);
     } catch (err: any) {
       console.error("Fetch Error:", err);

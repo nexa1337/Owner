@@ -921,6 +921,218 @@ const HypervisorGuideModal: React.FC<{ open: boolean; onClose: () => void }> = (
   );
 };
 
+const SystemChecker: React.FC<{ reqs: {label: string, value: string}[] }> = ({ reqs }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [userSpecs, setUserSpecs] = useState({
+    ram: 16,
+    os: '10',
+    cpuTier: 3,
+    gpuTier: 3,
+  });
+  const [result, setResult] = useState<{status: 'pass'|'fail'|'warn', messages: string[]} | null>(null);
+
+  const analyzeRequirements = (reqs: {label: string, value: string}[]) => {
+    let minRam = 0;
+    let minOs = 0;
+    let minGpuTier = 1;
+    let minCpuTier = 1;
+
+    reqs.forEach(req => {
+      const label = req.label.toLowerCase();
+      const val = req.value.toLowerCase();
+
+      if (label.includes('memory') || label.includes('ram')) {
+        const match = val.match(/(\d+)\s*gb/);
+        if (match) minRam = parseInt(match[1]);
+        else {
+          const mbMatch = val.match(/(\d+)\s*mb/);
+          if (mbMatch) minRam = parseInt(mbMatch[1]) / 1024;
+        }
+      }
+
+      if (label.includes('os') || label.includes('system')) {
+        if (val.includes('11')) minOs = 11;
+        else if (val.includes('10')) minOs = 10;
+        else if (val.includes('8')) minOs = 8;
+        else if (val.includes('7')) minOs = 7;
+      }
+
+      if (label.includes('graphics') || label.includes('gpu') || label.includes('video')) {
+        if (val.match(/4090|4080|7900|3090/)) minGpuTier = 5;
+        else if (val.match(/3070|3080|4070|6700|6800|7700|7800|2080/)) minGpuTier = 4;
+        else if (val.match(/1060|1660|2060|3060|4060|580|590|5700|6600|7600|1070|980/)) minGpuTier = 3;
+        else if (val.match(/1050|970|960|750|560|460|1030|mx/)) minGpuTier = 2;
+        else minGpuTier = 3;
+      }
+
+      if (label.includes('processor') || label.includes('cpu')) {
+        if (val.match(/i9|ryzen 9|i7|ryzen 7/)) minCpuTier = 4;
+        else if (val.match(/i5|ryzen 5/)) minCpuTier = 3;
+        else if (val.match(/i3|ryzen 3/)) minCpuTier = 2;
+        else minCpuTier = 2;
+      }
+    });
+
+    return { minRam, minOs, minGpuTier, minCpuTier };
+  };
+
+  const handleCheck = () => {
+    const parsedReqs = analyzeRequirements(reqs);
+    const messages = [];
+    let status: 'pass'|'fail'|'warn' = 'pass';
+
+    if (parsedReqs.minRam > 0) {
+      if (userSpecs.ram < parsedReqs.minRam) {
+        messages.push(`❌ RAM: You have ${userSpecs.ram}GB, but ${parsedReqs.minRam}GB is required.`);
+        status = 'fail';
+      } else {
+        messages.push(`✅ RAM: ${userSpecs.ram}GB meets the ${parsedReqs.minRam}GB requirement.`);
+      }
+    }
+
+    if (parsedReqs.minOs > 0) {
+      const userOsNum = parseInt(userSpecs.os);
+      if (userOsNum < parsedReqs.minOs) {
+        messages.push(`❌ OS: You have Windows ${userOsNum}, but Windows ${parsedReqs.minOs} is required.`);
+        status = 'fail';
+      } else {
+        messages.push(`✅ OS: Windows ${userOsNum} meets the requirement.`);
+      }
+    }
+
+    if (parsedReqs.minGpuTier > 1) {
+      if (userSpecs.gpuTier < parsedReqs.minGpuTier) {
+        messages.push(`⚠️ GPU: Your GPU might be too weak for optimal performance.`);
+        if (status === 'pass') status = 'warn';
+      } else {
+        messages.push(`✅ GPU: Your GPU should handle this game well.`);
+      }
+    }
+
+    if (parsedReqs.minCpuTier > 1) {
+      if (userSpecs.cpuTier < parsedReqs.minCpuTier) {
+        messages.push(`⚠️ CPU: Your CPU might bottleneck this game.`);
+        if (status === 'pass') status = 'warn';
+      } else {
+        messages.push(`✅ CPU: Your CPU is sufficient.`);
+      }
+    }
+
+    if (messages.length === 0) {
+      messages.push("✅ No specific requirements found. It might run fine!");
+    }
+
+    setResult({ status, messages });
+  };
+
+  return (
+    <div className="mt-4 bg-slate-100 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between p-4 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-lg">
+            <Icon name="Cpu" size={20} />
+          </div>
+          <span className="font-bold text-slate-900 dark:text-white">Can I Run It? (Smart Check)</span>
+        </div>
+        <Icon name={isOpen ? "ChevronUp" : "ChevronDown"} size={20} className="text-slate-500" />
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="border-t border-slate-200 dark:border-slate-700 p-4 space-y-4"
+          >
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500 uppercase">Operating System</label>
+                <select 
+                  value={userSpecs.os}
+                  onChange={(e) => setUserSpecs({...userSpecs, os: e.target.value})}
+                  className="w-full p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
+                >
+                  <option value="7">Windows 7</option>
+                  <option value="8">Windows 8</option>
+                  <option value="10">Windows 10</option>
+                  <option value="11">Windows 11</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500 uppercase">RAM (GB)</label>
+                <select 
+                  value={userSpecs.ram}
+                  onChange={(e) => setUserSpecs({...userSpecs, ram: parseInt(e.target.value)})}
+                  className="w-full p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
+                >
+                  <option value="4">4 GB</option>
+                  <option value="8">8 GB</option>
+                  <option value="16">16 GB</option>
+                  <option value="32">32 GB</option>
+                  <option value="64">64+ GB</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500 uppercase">Processor (CPU)</label>
+                <select 
+                  value={userSpecs.cpuTier}
+                  onChange={(e) => setUserSpecs({...userSpecs, cpuTier: parseInt(e.target.value)})}
+                  className="w-full p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
+                >
+                  <option value="1">Basic Dual Core (Older Intel/AMD)</option>
+                  <option value="2">Standard Quad Core (i3 / Ryzen 3)</option>
+                  <option value="3">Solid 6-Core (i5 / Ryzen 5)</option>
+                  <option value="4">High-End 8+ Core (i7/i9 / Ryzen 7/9)</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500 uppercase">Graphics (GPU)</label>
+                <select 
+                  value={userSpecs.gpuTier}
+                  onChange={(e) => setUserSpecs({...userSpecs, gpuTier: parseInt(e.target.value)})}
+                  className="w-full p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
+                >
+                  <option value="1">Integrated Graphics (Intel HD / AMD APU)</option>
+                  <option value="2">Entry Level (GTX 1050 / RX 560)</option>
+                  <option value="3">Mid Range (RTX 3060 / RX 6600)</option>
+                  <option value="4">High End (RTX 4070 / RX 7800)</option>
+                  <option value="5">Ultra (RTX 4090 / RX 7900 XTX)</option>
+                </select>
+              </div>
+            </div>
+
+            <button 
+              onClick={handleCheck}
+              className="w-full py-3 bg-primary-600 hover:bg-primary-500 text-white font-bold rounded-lg transition-colors shadow-lg shadow-primary-600/20"
+            >
+              Check Compatibility
+            </button>
+
+            {result && (
+              <div className={`p-4 rounded-xl border ${result.status === 'pass' ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800' : result.status === 'warn' ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'}`}>
+                <h4 className={`font-black uppercase tracking-wider mb-3 ${result.status === 'pass' ? 'text-emerald-600 dark:text-emerald-400' : result.status === 'warn' ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'}`}>
+                  {result.status === 'pass' ? 'Looks Good to Go!' : result.status === 'warn' ? 'Might Struggle a Bit' : 'Probably Won\'t Run Well'}
+                </h4>
+                <div className="space-y-2">
+                  {result.messages.map((msg, idx) => (
+                    <div key={idx} className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      {msg}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
 const ResourceDetailModal: React.FC<{ 
   item: ResourceItem; 
   onClose: () => void;
@@ -1191,6 +1403,7 @@ const ResourceDetailModal: React.FC<{
                           );
                         })}
                       </div>
+                      <SystemChecker reqs={item.systemReqs} />
                    </Section>
                 )}
 

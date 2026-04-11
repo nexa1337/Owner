@@ -6,48 +6,17 @@ import { NAV_ITEMS } from '../constants';
 import Icon from './Icon';
 
 const MoroccanFlag = () => (
-  <motion.div 
-    className="relative w-6 h-4 md:w-8 md:h-5 rounded shadow-sm cursor-default overflow-hidden group"
+  <div 
+    className="relative w-6 h-4 md:w-8 md:h-5 rounded shadow-sm cursor-default overflow-hidden group flex items-center justify-center"
     title="Made in Morocco 🇲🇦"
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
   >
-    <motion.div
-      className="w-full h-full relative"
-      animate={{ 
-        x: [0, -2, 2, -1, 1, 0],
-        skewX: [0, 5, -5, 2, -2, 0],
-        filter: [
-            "hue-rotate(0deg)",
-            "hue-rotate(90deg) contrast(1.5)",
-            "hue-rotate(0deg)"
-        ]
-      }}
-      transition={{ 
-        duration: 0.4, 
-        repeat: Infinity, 
-        repeatDelay: 5,
-        repeatType: "mirror",
-        ease: "easeInOut" 
-      }}
-    >
-        {/* Realistic Flag Base */}
-        <div className="absolute inset-0 bg-[#C1272D] flex items-center justify-center overflow-hidden">
-             {/* Fabric Texture Overlay */}
-             <div className="absolute inset-0 bg-gradient-to-r from-black/10 via-transparent to-black/10 opacity-30" style={{ backgroundSize: '4px 100%' }}></div>
-             <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-black/10 mix-blend-overlay"></div>
-             
-             {/* Star */}
-             <svg viewBox="0 0 512 512" className="w-3 h-3 md:w-4 md:h-4 text-[#006233] fill-current drop-shadow-sm relative z-10">
-                <path d="M256 32l68 147h154L351 268l46 148-141-88-141 88 46-148L34 179h154z" />
-             </svg>
-        </div>
-        
-        {/* Glitch Overlay (Red/Blue split simulation) */}
-        <div className="absolute inset-0 bg-red-500/20 mix-blend-screen translate-x-[1px] animate-pulse opacity-0 group-hover:opacity-100 transition-opacity"></div>
-        <div className="absolute inset-0 bg-blue-500/20 mix-blend-screen -translate-x-[1px] animate-pulse animation-delay-75 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-    </motion.div>
-  </motion.div>
+    <img 
+      src="https://media3.giphy.com/media/v1.Y2lkPTZjMDliOTUyejV3bDZmYmVhczl6eWdtajNvb2Nocmk4NzVqYmE5aHBzd3Z6cndiOCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/Q6xuxUhCgCNpsbfhaP/source.gif" 
+      alt="Morocco Flag" 
+      className="w-full h-full object-cover"
+      referrerPolicy="no-referrer"
+    />
+  </div>
 );
 
 const Header: React.FC = () => {

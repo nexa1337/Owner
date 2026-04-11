@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { GoogleGenAI } from "@google/genai";
 import Icon from '../components/Icon';
+import { CommentsSection } from '../components/CommentsSection';
 
 // --- CONFIGURATION ---
 const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxbQKmoUUH4KzLmkAYZMGpoORPDTFYTzqCpnScEFIw5ngQ1cgzvFWU5fq0OXe2M5Ref/exec';
@@ -92,6 +93,7 @@ interface ResourceItem {
   gameId?: string;
   ratingPositive?: string;
   ratingNegative?: string;
+  dateAdded?: string;
   hasDenuvo?: boolean;
   hasExternalLauncher?: boolean;
   systemReqs: Requirement[];
@@ -117,6 +119,7 @@ interface UpcomingGame {
   platform: string;
   price: string;
   icon: string;
+  dateAdded?: string;
 }
 
 interface SteamAccount {
@@ -373,15 +376,60 @@ const SteamAccountsModal: React.FC<{ open: boolean; onClose: () => void; account
 };
 
 // REQUEST MODAL
-const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (data: any) => Promise<void>; initialTitle?: string }> = ({ open, onClose, onSubmit, initialTitle = '' }) => {
+const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (data: any) => Promise<void>; initialTitle?: string; allResources?: Record<string, ResourceItem[]> }> = ({ open, onClose, onSubmit, initialTitle = '', allResources = {} }) => {
     const [formData, setFormData] = useState({ title: initialTitle, category: 'Game', image: '', message: '' });
     const [loading, setLoading] = useState(false);
+    const [duplicateItem, setDuplicateItem] = useState<ResourceItem | null>(null);
+    const [autoCategorized, setAutoCategorized] = useState(false);
 
     useEffect(() => {
         if (open) {
             setFormData(prev => ({ ...prev, title: initialTitle }));
         }
     }, [open, initialTitle]);
+
+    // Smart Features Effect
+    useEffect(() => {
+        if (!formData.title || formData.title.length < 3) {
+            setDuplicateItem(null);
+            return;
+        }
+
+        const query = formData.title.toLowerCase();
+
+        // 1. Duplicate Detection
+        let foundMatch = null;
+        for (const category in allResources) {
+            const match = allResources[category].find(item => item.name.toLowerCase() === query || item.name.toLowerCase().includes(query));
+            if (match) {
+                foundMatch = match;
+                break;
+            }
+        }
+        setDuplicateItem(foundMatch || null);
+
+        // 2. Auto-Categorization
+        const toolKeywords = ['adobe', 'autocad', 'photoshop', 'illustrator', 'office', 'windows', 'software', 'revit', 'sketchup', 'blender', '3ds max', 'lumion', 'v-ray', 'unreal engine', 'd5 render', 'twinmotion', 'archicad'];
+        const steamToolKeywords = ['steam', 'bypass', 'tool', 'unlocker', 'greenluma', 'koalageddon'];
+        
+        let suggestedCategory = 'Game';
+        if (toolKeywords.some(kw => query.includes(kw))) {
+            suggestedCategory = 'Tools';
+        } else if (steamToolKeywords.some(kw => query.includes(kw))) {
+            suggestedCategory = 'SteamTools';
+        }
+
+        if (suggestedCategory !== formData.category && !autoCategorized) {
+            setFormData(prev => ({ ...prev, category: suggestedCategory }));
+            setAutoCategorized(true);
+        }
+
+    }, [formData.title, allResources]);
+
+    const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setFormData({...formData, category: e.target.value});
+        setAutoCategorized(true); // Prevent auto-changing it again
+    };
 
     if (!open) return null;
 
@@ -391,6 +439,7 @@ const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (da
         await onSubmit(formData);
         setLoading(false);
         setFormData({ title: '', category: 'Game', image: '', message: '' });
+        setAutoCategorized(false);
         onClose();
     };
 
@@ -428,17 +477,43 @@ const RequestModal: React.FC<{ open: boolean; onClose: () => void; onSubmit: (da
                                 onChange={(e) => setFormData({...formData, title: e.target.value})}
                             />
                         </div>
+
+                        {/* Smart Duplicate Warning */}
+                        <AnimatePresence>
+                            {duplicateItem && (
+                                <motion.div 
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex items-start gap-3 overflow-hidden"
+                                >
+                                    <Icon name="AlertTriangle" size={18} className="text-amber-500 shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-1">Already in Vault?</p>
+                                        <p className="text-xs text-slate-600 dark:text-slate-400">
+                                            We found <strong>{duplicateItem.name}</strong> in the {duplicateItem.category} section. Are you sure you want to request it?
+                                        </p>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
                         <div>
                             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Section</label>
                             <select 
                                 className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors"
                                 value={formData.category}
-                                onChange={(e) => setFormData({...formData, category: e.target.value})}
+                                onChange={handleCategoryChange}
                             >
                                 <option value="Game">Game</option>
                                 <option value="SteamTools">SteamTools</option>
-                                <option value="Architect">Architect</option>
+                                <option value="Tools">Tools</option>
                             </select>
+                            {autoCategorized && formData.title.length > 2 && (
+                                <p className="text-[10px] text-blue-500 mt-1.5 flex items-center gap-1 font-bold uppercase tracking-wider">
+                                    <Icon name="Wand2" size={10} /> Auto-categorized based on title
+                                </p>
+                            )}
                         </div>
                         <div>
                             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Image URL (Optional)</label>
@@ -639,7 +714,13 @@ const GameCarousel: React.FC<{ games: UpcomingGame[], loading: boolean, errorSta
     );
 };
 
-const RecentProductsCarousel: React.FC<{ items: ResourceItem[], loading: boolean, onSelect: (item: ResourceItem) => void }> = ({ items, loading, onSelect }) => {
+const RecentProductsCarousel: React.FC<{ 
+    items: ResourceItem[], 
+    loading: boolean, 
+    onSelect: (item: ResourceItem) => void,
+    stash: string[],
+    toggleStash: (id: string, e?: React.MouseEvent) => void
+}> = ({ items, loading, onSelect, stash, toggleStash }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [itemsPerView, setItemsPerView] = useState(5);
     const [isHovered, setIsHovered] = useState(false);
@@ -753,6 +834,18 @@ const RecentProductsCarousel: React.FC<{ items: ResourceItem[], loading: boolean
                                 <div className="absolute top-2 left-2 px-2 py-1 bg-primary-600 text-white rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg z-20">
                                     {item.category === 'steamtools' ? 'STEAMTOOLS' : item.category.toUpperCase()}
                                 </div>
+
+                                <button
+                                    onClick={(e) => toggleStash(item.id, e)}
+                                    className={`absolute top-2 right-2 z-40 p-1.5 rounded-full backdrop-blur-md transition-all ${
+                                        stash.includes(item.id) 
+                                        ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' 
+                                        : 'bg-black/40 text-white/70 hover:bg-black/60 hover:text-white border border-white/10'
+                                    } ${item.isFree ? 'top-10' : ''}`}
+                                    title={stash.includes(item.id) ? "Remove from Stash" : "Add to Stash"}
+                                >
+                                    <Icon name="Bookmark" size={12} className={stash.includes(item.id) ? "fill-current" : ""} />
+                                </button>
 
                                 <div className="absolute bottom-0 left-0 right-0 p-3 z-20">
                                     <h3 className="font-black text-xs md:text-sm text-white leading-tight line-clamp-2 drop-shadow-md group-hover/card:text-primary-400 transition-colors">
@@ -921,6 +1014,66 @@ const HypervisorGuideModal: React.FC<{ open: boolean; onClose: () => void }> = (
   );
 };
 
+const analyzeRequirements = (reqs: {label: string, value: string}[]) => {
+  let minRam = 0;
+  let minOs = 0;
+  let minGpuTier = 1;
+  let minCpuTier = 1;
+
+  reqs.forEach(req => {
+    const label = req.label.toLowerCase();
+    const val = req.value.toLowerCase();
+
+    if (label.includes('memory') || label.includes('ram')) {
+      const match = val.match(/(\d+)\s*gb/);
+      if (match) minRam = parseInt(match[1]);
+      else {
+        const mbMatch = val.match(/(\d+)\s*mb/);
+        if (mbMatch) minRam = parseInt(mbMatch[1]) / 1024;
+      }
+    }
+
+    if (label.includes('os') || label.includes('system')) {
+      if (val.includes('11')) minOs = 11;
+      else if (val.includes('10')) minOs = 10;
+      else if (val.includes('8')) minOs = 8;
+      else if (val.includes('7')) minOs = 7;
+    }
+
+    if (label.includes('graphics') || label.includes('gpu') || label.includes('video')) {
+      if (val.match(/4090|4080|7900|3090/)) minGpuTier = 5;
+      else if (val.match(/3070|3080|4070|6700|6800|7700|7800|2080/)) minGpuTier = 4;
+      else if (val.match(/1060|1660|2060|3060|4060|580|590|5700|6600|7600|1070|980/)) minGpuTier = 3;
+      else if (val.match(/1050|970|960|750|560|460|1030|mx/)) minGpuTier = 2;
+      else minGpuTier = 3;
+    }
+
+    if (label.includes('processor') || label.includes('cpu')) {
+      if (val.match(/i9|ryzen 9|i7|ryzen 7/)) minCpuTier = 4;
+      else if (val.match(/i5|ryzen 5/)) minCpuTier = 3;
+      else if (val.match(/i3|ryzen 3/)) minCpuTier = 2;
+      else minCpuTier = 2;
+    }
+  });
+
+  return { minRam, minOs, minGpuTier, minCpuTier };
+};
+
+export const checkCompatibilityStatus = (userSpecs: {ram: number, os: string, cpuTier: number, gpuTier: number}, reqs: {label: string, value: string}[]) => {
+  if (!reqs || reqs.length === 0) return 'unknown';
+  const parsedReqs = analyzeRequirements(reqs);
+  let status: 'pass'|'fail'|'warn' = 'pass';
+
+  if (parsedReqs.minRam > 0 && userSpecs.ram < parsedReqs.minRam) status = 'fail';
+  if (parsedReqs.minOs > 0 && parseInt(userSpecs.os) < parsedReqs.minOs) status = 'fail';
+  
+  if (status !== 'fail') {
+      if (parsedReqs.minGpuTier > 1 && userSpecs.gpuTier < parsedReqs.minGpuTier) status = 'warn';
+      if (parsedReqs.minCpuTier > 1 && userSpecs.cpuTier < parsedReqs.minCpuTier) status = 'warn';
+  }
+  return status;
+};
+
 const SystemChecker: React.FC<{ reqs: {label: string, value: string}[] }> = ({ reqs }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [userSpecs, setUserSpecs] = useState({
@@ -930,51 +1083,6 @@ const SystemChecker: React.FC<{ reqs: {label: string, value: string}[] }> = ({ r
     gpuTier: 3,
   });
   const [result, setResult] = useState<{status: 'pass'|'fail'|'warn', messages: string[]} | null>(null);
-
-  const analyzeRequirements = (reqs: {label: string, value: string}[]) => {
-    let minRam = 0;
-    let minOs = 0;
-    let minGpuTier = 1;
-    let minCpuTier = 1;
-
-    reqs.forEach(req => {
-      const label = req.label.toLowerCase();
-      const val = req.value.toLowerCase();
-
-      if (label.includes('memory') || label.includes('ram')) {
-        const match = val.match(/(\d+)\s*gb/);
-        if (match) minRam = parseInt(match[1]);
-        else {
-          const mbMatch = val.match(/(\d+)\s*mb/);
-          if (mbMatch) minRam = parseInt(mbMatch[1]) / 1024;
-        }
-      }
-
-      if (label.includes('os') || label.includes('system')) {
-        if (val.includes('11')) minOs = 11;
-        else if (val.includes('10')) minOs = 10;
-        else if (val.includes('8')) minOs = 8;
-        else if (val.includes('7')) minOs = 7;
-      }
-
-      if (label.includes('graphics') || label.includes('gpu') || label.includes('video')) {
-        if (val.match(/4090|4080|7900|3090/)) minGpuTier = 5;
-        else if (val.match(/3070|3080|4070|6700|6800|7700|7800|2080/)) minGpuTier = 4;
-        else if (val.match(/1060|1660|2060|3060|4060|580|590|5700|6600|7600|1070|980/)) minGpuTier = 3;
-        else if (val.match(/1050|970|960|750|560|460|1030|mx/)) minGpuTier = 2;
-        else minGpuTier = 3;
-      }
-
-      if (label.includes('processor') || label.includes('cpu')) {
-        if (val.match(/i9|ryzen 9|i7|ryzen 7/)) minCpuTier = 4;
-        else if (val.match(/i5|ryzen 5/)) minCpuTier = 3;
-        else if (val.match(/i3|ryzen 3/)) minCpuTier = 2;
-        else minCpuTier = 2;
-      }
-    });
-
-    return { minRam, minOs, minGpuTier, minCpuTier };
-  };
 
   const handleCheck = () => {
     const parsedReqs = analyzeRequirements(reqs);
@@ -1137,7 +1245,9 @@ const ResourceDetailModal: React.FC<{
   item: ResourceItem; 
   onClose: () => void;
   isHypervisor?: boolean;
-}> = ({ item, onClose, isHypervisor }) => {
+  stash: string[];
+  toggleStash: (id: string, e?: React.MouseEvent) => void;
+}> = ({ item, onClose, isHypervisor, stash, toggleStash }) => {
   const [activeImage, setActiveImage] = useState(item.coverImage);
   const [showTrailer, setShowTrailer] = useState(false);
   const [translatedDesc, setTranslatedDesc] = useState<string | null>(null);
@@ -1285,7 +1395,20 @@ const ResourceDetailModal: React.FC<{
                   {isSteamTool && item.gameId && <Badge text={`ID: ${item.gameId}`} color="slate" icon="Hash" />}
                   {!isSteamTool && item.category !== 'architect' && item.repackBy && <Badge text={`REPACK: ${item.repackBy.toUpperCase()}`} color="emerald" icon="Box" />}
                </div>
-               <h2 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white leading-none tracking-tight uppercase italic">{item.name}</h2>
+               <div className="flex items-start justify-between gap-4">
+                 <h2 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white leading-none tracking-tight uppercase italic">{item.name}</h2>
+                 <button
+                    onClick={(e) => toggleStash(item.id, e)}
+                    className={`shrink-0 p-3 rounded-xl transition-all ${
+                        stash.includes(item.id) 
+                        ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' 
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                    }`}
+                    title={stash.includes(item.id) ? "Remove from Stash" : "Add to Stash"}
+                 >
+                    <Icon name="Bookmark" size={20} className={stash.includes(item.id) ? "fill-current" : ""} />
+                 </button>
+               </div>
                {item.genres && (
                  <div className="mt-3 text-xs font-mono text-primary-500 dark:text-sky-400 font-bold uppercase tracking-widest flex items-center gap-2">
                     <Icon name="Gamepad2" size={14} /> {item.genres}
@@ -1512,6 +1635,8 @@ const ResourceDetailModal: React.FC<{
                         </button>
                     </div>
                 </Section>
+                
+                <CommentsSection itemId={item.id} />
             </div>
         </div>
       </motion.div>
@@ -1589,6 +1714,167 @@ const DownloadButton: React.FC<{ label: string; sub: string; href: string; icon:
   </a>
 );
 
+// --- LATEST INTEL PANEL ---
+
+type IntelCategory = 'ALL' | 'GAME' | 'HYPERVISOR' | 'STEAMTOOLS' | 'ARCHITECT' | 'EXTRA' | 'UPCOMING';
+interface IntelItem {
+  id: string;
+  title: string;
+  description: string;
+  timestamp: string;
+  category: IntelCategory;
+  type: 'NEW' | 'UPDATE' | 'FIX' | 'ALERT';
+  version?: string;
+}
+
+const LatestIntelPanel: React.FC<{ open: boolean; onClose: () => void; items: IntelItem[] }> = ({ open, onClose, items }) => {
+  const [filter, setFilter] = useState<IntelCategory>('ALL');
+
+  if (!open) return null;
+
+  const filteredIntel = items.filter(item => filter === 'ALL' || item.category === filter);
+
+  const getCategoryIcon = (category: string) => {
+    switch(category) {
+      case 'GAME': return 'Gamepad2';
+      case 'HYPERVISOR': return 'Cpu';
+      case 'STEAMTOOLS': return 'Wrench';
+      case 'ARCHITECT': return 'Building';
+      case 'EXTRA': return 'Plus';
+      case 'UPCOMING': return 'Clock';
+      default: return 'Info';
+    }
+  };
+
+  const getTypeColor = (type: string) => {
+    switch(type) {
+      case 'NEW': return 'bg-emerald-500 text-white';
+      case 'UPDATE': return 'bg-blue-500 text-white';
+      case 'FIX': return 'bg-purple-500 text-white';
+      case 'ALERT': return 'bg-red-500 text-white';
+      default: return 'bg-slate-500 text-white';
+    }
+  };
+
+  const formatTimeAgo = (dateString: string) => {
+    if (!dateString) return 'Unknown date';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString; // Fallback to raw string if unparseable
+    
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diffInSeconds < 0) return 'Just now';
+    if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+    if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 604800)}w ago`;
+    if (diffInSeconds < 31536000) return `${Math.floor(diffInSeconds / 2592000)}mo ago`;
+    return `${Math.floor(diffInSeconds / 31536000)}y ago`;
+  };
+
+  return (
+    <AnimatePresence>
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[110] flex justify-end bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      >
+        <motion.div 
+          initial={{ x: '100%' }}
+          animate={{ x: 0 }}
+          exit={{ x: '100%' }}
+          transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+          className="w-full max-w-md h-full bg-white dark:bg-slate-900 shadow-2xl flex flex-col border-l border-slate-200 dark:border-slate-800"
+          onClick={e => e.stopPropagation()}
+        >
+          <div className="p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center text-primary-500 relative">
+                <Icon name="Radar" size={24} className="animate-pulse" />
+                <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-slate-50 dark:border-slate-950"></div>
+              </div>
+              <div>
+                <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-widest">Latest Intel</h2>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Live Changelog Feed</p>
+              </div>
+            </div>
+            <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 transition-colors">
+              <Icon name="X" size={20} />
+            </button>
+          </div>
+
+          <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex gap-2 overflow-x-auto no-scrollbar">
+            {(['ALL', 'GAME', 'HYPERVISOR', 'STEAMTOOLS', 'ARCHITECT', 'EXTRA', 'UPCOMING'] as IntelCategory[]).map(cat => (
+              <button
+                key={cat}
+                onClick={() => setFilter(cat)}
+                className={`shrink-0 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
+                  filter === cat 
+                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md' 
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                }`}
+              >
+                {cat === 'ARCHITECT' ? 'TOOLS' : cat}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+            {filteredIntel.map((item, index) => (
+              <motion.div 
+                key={item.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="relative pl-6 border-l-2 border-slate-200 dark:border-slate-800"
+              >
+                <div className={`absolute -left-[9px] top-0 w-4 h-4 rounded-full border-4 border-white dark:border-slate-900 ${getTypeColor(item.type).split(' ')[0]}`}></div>
+                
+                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700/50 hover:border-primary-500/50 transition-colors group">
+                  <div className="flex items-start justify-between gap-4 mb-2">
+                    <div className="flex items-center gap-2">
+                      <Icon name={getCategoryIcon(item.category)} size={14} className="text-slate-400" />
+                      <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${getTypeColor(item.type)}`}>
+                        {item.type}
+                      </span>
+                      {item.version && (
+                        <span className="text-[10px] font-mono font-bold text-slate-500 bg-slate-200 dark:bg-slate-700 px-1.5 rounded">
+                          {item.version}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">
+                      {formatTimeAgo(item.timestamp)}
+                    </span>
+                  </div>
+                  
+                  <h3 className="text-sm font-black text-slate-900 dark:text-white mb-1 group-hover:text-primary-500 transition-colors">
+                    {item.title}
+                  </h3>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+                    {item.description}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+            
+            {filteredIntel.length === 0 && (
+              <div className="text-center py-10">
+                <Icon name="Ghost" size={48} className="mx-auto text-slate-300 dark:text-slate-700 mb-4" />
+                <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">No intel found</p>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
 // --- MAIN PAGE COMPONENT ---
 
 const SecretArea: React.FC = () => {
@@ -1600,12 +1886,38 @@ const SecretArea: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [allResources, setAllResources] = useState<Record<string, ResourceItem[]>>({ game: [], hypervisor: [], steamtools: [], architect: [], extra: [] });
-  const [activeTab, setActiveTab] = useState<'game' | 'hypervisor' | 'steamtools' | 'architect' | 'extra'>('game');
+  const [activeTab, setActiveTab] = useState<'game' | 'hypervisor' | 'steamtools' | 'architect' | 'extra' | 'stash'>('game');
   const [searchQuery, setSearchQuery] = useState('');
+  const [stash, setStash] = useState<string[]>([]);
+
+  useEffect(() => {
+    const savedStash = localStorage.getItem('myStash');
+    if (savedStash) {
+      try {
+        setStash(JSON.parse(savedStash));
+      } catch (e) {
+        console.error("Failed to parse stash from local storage");
+      }
+    }
+  }, []);
+
+  const toggleStash = (id: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    setStash(prev => {
+      const newStash = prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id];
+      localStorage.setItem('myStash', JSON.stringify(newStash));
+      return newStash;
+    });
+  };
+
   const [selectedResource, setSelectedResource] = useState<ResourceItem | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [visitorCount, setVisitorCount] = useState(2491);
   const [showRequestModal, setShowRequestModal] = useState(false);
+  const [showIntelPanel, setShowIntelPanel] = useState(false);
   const [notifications, setNotifications] = useState<Array<{id: number, title: string, text: string, time: string, isAr?: boolean}>>([]);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [upcomingGames, setUpcomingGames] = useState<UpcomingGame[]>([]);
@@ -1614,8 +1926,73 @@ const SecretArea: React.FC = () => {
   const [scriptError, setScriptError] = useState(false);
   const [requestModalInitialTitle, setRequestModalInitialTitle] = useState('');
   
+  // Global System Filter
+  const [globalSpecs, setGlobalSpecs] = useState({
+    ram: 16,
+    os: '10',
+    cpuTier: 3,
+    gpuTier: 3,
+    isActive: false
+  });
+  const [showGlobalFilter, setShowGlobalFilter] = useState(false);
+  
   // Steam Accounts Feature
   const [steamAccounts, setSteamAccounts] = useState<SteamAccount[]>([]);
+
+  const intelItems = useMemo(() => {
+    const items: IntelItem[] = [];
+    let idCounter = 1;
+
+    const addItems = (sourceItems: any[], intelCategory: IntelCategory) => {
+      // Sort source items by real date if available
+      const sorted = [...sourceItems].sort((a, b) => {
+          const dA = new Date(a.dateAdded || 0).getTime();
+          const dB = new Date(b.dateAdded || 0).getTime();
+          if (!isNaN(dA) && !isNaN(dB)) return dB - dA;
+          if (!isNaN(dA)) return -1;
+          if (!isNaN(dB)) return 1;
+          return 0;
+      });
+      
+      const recent = sorted.slice(0, 4);
+      recent.forEach((item) => {
+        const v = String(item.version || '').toLowerCase();
+        const title = String(item.name || item.title || '').toLowerCase();
+        
+        // Smart determination of NEW vs UPDATE
+        const isUpdate = (v && v !== '1.0' && v !== '1.0.0' && v !== 'v1.0' && v !== 'v1.0.0' && v !== 'release' && v !== 'n/a' && v !== 'tba') || title.includes('update') || title.includes('hotfix') || title.includes('patch');
+        const type = isUpdate ? 'UPDATE' : 'NEW';
+        const descPrefix = isUpdate ? 'Updated to' : 'New addition:';
+        
+        items.push({
+          id: `intel-${idCounter++}`,
+          title: item.name || item.title || 'Unknown',
+          description: `${descPrefix} ${item.version ? `(v${item.version})` : item.name || item.title}`,
+          timestamp: item.dateAdded || '', // Use exact real date, formatTimeAgo handles empty
+          category: intelCategory,
+          type: type,
+          version: item.version
+        });
+      });
+    };
+
+    addItems(allResources['game'] || [], 'GAME');
+    addItems(allResources['hypervisor'] || [], 'HYPERVISOR');
+    addItems(allResources['steamtools'] || [], 'STEAMTOOLS');
+    addItems(allResources['architect'] || [], 'ARCHITECT');
+    addItems(allResources['extra'] || [], 'EXTRA');
+    addItems(upcomingGames || [], 'UPCOMING');
+
+    // Sort globally by timestamp descending
+    return items.sort((a, b) => {
+        const dA = new Date(a.timestamp || 0).getTime();
+        const dB = new Date(b.timestamp || 0).getTime();
+        if (!isNaN(dA) && !isNaN(dB)) return dB - dA;
+        if (!isNaN(dA)) return -1;
+        if (!isNaN(dB)) return 1;
+        return 0;
+    });
+  }, [allResources, upcomingGames]);
 
   const recentProducts = useMemo(() => {
     const recent: ResourceItem[] = [];
@@ -1904,7 +2281,8 @@ const SecretArea: React.FC = () => {
              image: item.image || item.coverImage || 'https://placehold.co/600x800/0f172a/334155?text=ENCRYPTED',
              platform: formatPlatformDisplay(item.platform || 'TBA'),
              price: item.price || 'TBA',
-             icon: getPlatformIcon(item.platform || '')
+             icon: getPlatformIcon(item.platform || ''),
+             dateAdded: item.date || item.timestamp || item.dateAdded || item.updated || ''
          }));
          setUpcomingGames(mappedUpcoming);
       } else {
@@ -1946,8 +2324,12 @@ const SecretArea: React.FC = () => {
 
         if (targetKey && transformed.hasOwnProperty(targetKey)) {
           transformed[targetKey] = data[tabKey].map((row: any, idx: number) => {
-            // Robust access: check both lower and original casing
-            const getVal = (key: string) => row[key] || row[key.charAt(0).toUpperCase() + key.slice(1)] || '';
+            // Robust access: check case-insensitive and ignore spaces
+            const getVal = (key: string) => {
+                const normalizedSearchKey = key.toLowerCase().replace(/\s+/g, '');
+                const foundKey = Object.keys(row).find(k => k.toLowerCase().replace(/\s+/g, '') === normalizedSearchKey);
+                return foundKey ? row[foundKey] : '';
+            };
             
             const reqsStr = getVal('requirements');
             const reqs = (reqsStr || '').toString().split('|').map((s: string) => {
@@ -2036,6 +2418,7 @@ const SecretArea: React.FC = () => {
               gameId: getVal('gameId') || '',
               ratingPositive: getVal('ratingPositive') || '',
               ratingNegative: getVal('ratingNegative') || '',
+              dateAdded: getVal('date') || getVal('timestamp') || getVal('dateAdded') || getVal('updated') || getVal('time') || getVal('created') || '',
               hasDenuvo: String(getVal('denuvo')).toLowerCase() === 'true',
               hasExternalLauncher: String(getVal('launcher')).toLowerCase() === 'true',
               systemReqs: reqs,
@@ -2070,7 +2453,16 @@ const SecretArea: React.FC = () => {
   useEffect(() => { setCurrentPage(1); }, [activeTab, searchQuery]);
 
   const filteredData = useMemo(() => {
-    const currentTabData = allResources[activeTab] || [];
+    let currentTabData: ResourceItem[] = [];
+    if (activeTab === 'stash') {
+      const allItems = Object.values(allResources).flat();
+      currentTabData = allItems.filter(item => stash.includes(item.id));
+      // Remove duplicates
+      currentTabData = Array.from(new Map(currentTabData.map(item => [item.id, item])).values());
+    } else {
+      currentTabData = allResources[activeTab] || [];
+    }
+
     const query = searchQuery.toLowerCase();
     const filtered = currentTabData.filter(item => 
       item.name.toLowerCase().includes(query) || 
@@ -2081,7 +2473,7 @@ const SecretArea: React.FC = () => {
         if (a.isPinned === b.isPinned) return 0;
         return a.isPinned ? -1 : 1;
     });
-  }, [allResources, activeTab, searchQuery]);
+  }, [allResources, activeTab, searchQuery, stash]);
 
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -2481,6 +2873,7 @@ const SecretArea: React.FC = () => {
       </div>
 
       <DisclaimerModal open={showDisclaimer} onClose={handleCloseDisclaimer} />
+      <LatestIntelPanel open={showIntelPanel} onClose={() => setShowIntelPanel(false)} items={intelItems} />
 
       <AnimatePresence>
         {selectedResource && (
@@ -2488,6 +2881,8 @@ const SecretArea: React.FC = () => {
             item={selectedResource} 
             onClose={() => setSelectedResource(null)} 
             isHypervisor={selectedResource.category === 'hypervisor'}
+            stash={stash}
+            toggleStash={toggleStash}
           />
         )}
       </AnimatePresence>
@@ -2499,6 +2894,7 @@ const SecretArea: React.FC = () => {
                 onClose={() => setShowRequestModal(false)} 
                 onSubmit={handleRequestSubmit}
                 initialTitle={requestModalInitialTitle}
+                allResources={allResources}
             />
         )}
       </AnimatePresence>
@@ -2654,74 +3050,187 @@ const SecretArea: React.FC = () => {
                 items={recentProducts} 
                 loading={loading}
                 onSelect={setSelectedResource}
+                stash={stash}
+                toggleStash={toggleStash}
              />
           </div>
         </section>
 
         <div className="sticky top-20 z-40 mb-10">
-           <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-800 p-2 rounded-2xl shadow-2xl flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between transition-all">
-              
-              <div className="grid grid-cols-2 sm:flex p-1 bg-slate-100 dark:bg-slate-950 rounded-xl w-full lg:w-auto gap-1 sm:gap-0 shrink-0">
-                {(['game', 'hypervisor', 'steamtools', 'architect', 'extra'] as const).map(tab => (
-                  <button 
-                      key={tab}
-                      onClick={() => setActiveTab(tab)}
-                      className={`relative px-2 py-2.5 sm:px-6 md:px-8 sm:py-3 rounded-lg font-bold text-[10px] sm:text-xs uppercase tracking-widest transition-all z-10 flex items-center justify-center ${activeTab === tab ? 'text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-300'}`}
-                  >
-                    {activeTab === tab && (
-                      <motion.div layoutId="activeTab" className="absolute inset-0 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700" transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} />
-                    )}
-                    <span className="relative z-10 flex items-center gap-1.5">
-                      {tab === 'hypervisor' ? (
-                        <>
-                          GAME
-                          <span className="bg-red-600 text-white px-1.5 py-0.5 rounded-md text-[8px] sm:text-[9px] font-black tracking-widest shadow-sm">
-                            HYPERVISOR
-                          </span>
-                        </>
-                      ) : tab}
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex items-center gap-2 w-full lg:w-auto lg:flex-1 lg:justify-end min-w-0">
-                  <div className="relative flex-1 lg:max-w-[400px] group min-w-0">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-500 transition-colors">
-                      <Icon name="Search" size={18} />
-                    </div>
-                    <input 
-                      type="text" 
-                      value={searchQuery} 
-                      onChange={e => setSearchQuery(e.target.value)} 
-                      placeholder={`SEARCH ${activeTab.toUpperCase()}...`} 
-                      className="w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/20 text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all truncate"
-                    />
+           <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-800 p-2 rounded-2xl shadow-2xl transition-all">
+              <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
+                  <div className="flex overflow-x-auto no-scrollbar p-1 bg-slate-100 dark:bg-slate-950 rounded-xl w-full lg:w-auto gap-1 shrink-0">
+                    {(['game', 'hypervisor', 'steamtools', 'architect', 'extra', 'stash'] as const).map(tab => (
+                      <button 
+                          key={tab}
+                          onClick={() => setActiveTab(tab)}
+                          className={`shrink-0 relative px-4 py-2.5 sm:px-6 md:px-8 sm:py-3 rounded-lg font-bold text-[10px] sm:text-xs uppercase tracking-widest transition-all z-10 flex items-center justify-center ${activeTab === tab ? 'text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-300'}`}
+                      >
+                        {activeTab === tab && (
+                          <motion.div layoutId="activeTab" className="absolute inset-0 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700" transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} />
+                        )}
+                        <span className="relative z-10 flex items-center gap-1.5">
+                          {tab === 'hypervisor' ? (
+                            <>
+                              GAME
+                              <span className="bg-red-600 text-white px-1.5 py-0.5 rounded-md text-[8px] sm:text-[9px] font-black tracking-widest shadow-sm">
+                                HYPERVISOR
+                              </span>
+                            </>
+                          ) : tab === 'architect' ? (
+                            'TOOLS'
+                          ) : tab === 'stash' ? (
+                            <>
+                              <Icon name="Bookmark" size={14} className={activeTab === 'stash' ? 'text-primary-500' : ''} />
+                              MY STASH
+                            </>
+                          ) : tab}
+                        </span>
+                      </button>
+                    ))}
                   </div>
-                  
-                  <button 
-                    onClick={fetchData}
-                    className="flex items-center justify-center p-3.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-all shrink-0"
-                    title="Reload Data"
-                  >
-                    <Icon name="RefreshCw" size={20} className={loading ? "animate-spin" : ""} />
-                  </button>
 
-                  <button 
-                    onClick={() => {
-                        setRequestModalInitialTitle(searchQuery);
-                        setShowRequestModal(true);
-                    }}
-                    className="flex items-center gap-2 px-4 py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all shrink-0 whitespace-nowrap"
-                    title="Request a game or tool not listed here"
-                  >
-                    <Icon name="Plus" size={20} />
-                    <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">
-                        <span className="inline sm:hidden">Request</span>
-                        <span className="hidden sm:inline">Request Item</span>
-                    </span>
-                  </button>
+                  <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full lg:w-auto lg:flex-1 lg:justify-end min-w-0">
+                      <div className="relative flex-1 min-w-[150px] lg:max-w-[400px] group">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary-500 transition-colors">
+                          <Icon name="Search" size={18} />
+                        </div>
+                        <input 
+                          type="text" 
+                          value={searchQuery} 
+                          onChange={e => setSearchQuery(e.target.value)} 
+                          placeholder={`SEARCH ${activeTab.toUpperCase()}...`} 
+                          className="w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/20 text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all truncate"
+                        />
+                      </div>
+                      
+                      <button 
+                        onClick={() => setShowIntelPanel(true)}
+                        className="relative flex items-center justify-center p-3.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-all shrink-0"
+                        title="Latest Intel (Live Changelog)"
+                      >
+                        <Icon name="Radar" size={20} className="animate-pulse text-primary-500" />
+                        <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-slate-200 dark:border-slate-800"></div>
+                      </button>
+
+                      <button 
+                        onClick={() => setShowGlobalFilter(!showGlobalFilter)}
+                        className={`flex items-center justify-center p-3.5 rounded-xl transition-all shrink-0 border ${globalSpecs.isActive ? 'bg-primary-500 text-white border-primary-500 shadow-lg shadow-primary-500/20' : 'bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-transparent'}`}
+                        title="Global System Filter"
+                      >
+                        <Icon name="Cpu" size={20} />
+                      </button>
+
+                      <button 
+                        onClick={fetchData}
+                        className="flex items-center justify-center p-3.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-all shrink-0"
+                        title="Reload Data"
+                      >
+                        <Icon name="RefreshCw" size={20} className={loading ? "animate-spin" : ""} />
+                      </button>
+
+                      <button 
+                        onClick={() => {
+                            setRequestModalInitialTitle(searchQuery);
+                            setShowRequestModal(true);
+                        }}
+                        className="flex items-center gap-2 px-4 py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all shrink-0 whitespace-nowrap"
+                        title="Request a game or tool not listed here"
+                      >
+                        <Icon name="Plus" size={20} />
+                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">
+                            <span className="inline sm:hidden">Request</span>
+                            <span className="hidden sm:inline">Request Item</span>
+                        </span>
+                      </button>
+                  </div>
               </div>
+
+              {/* Global Filter Panel */}
+              <AnimatePresence>
+                {showGlobalFilter && (
+                  <motion.div 
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-4 p-4 sm:p-6 bg-slate-100 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                        <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
+                          <Icon name="Cpu" size={18} className="text-primary-500" />
+                          Global "Can I Run It?" Filter
+                        </h3>
+                        <label className="flex items-center gap-2 cursor-pointer self-start sm:self-auto">
+                          <span className="text-xs font-bold text-slate-500 uppercase">Enable Filter</span>
+                          <div className="relative">
+                            <input type="checkbox" className="sr-only" checked={globalSpecs.isActive} onChange={(e) => setGlobalSpecs({...globalSpecs, isActive: e.target.checked})} />
+                            <div className={`block w-10 h-6 rounded-full transition-colors ${globalSpecs.isActive ? 'bg-primary-500' : 'bg-slate-300 dark:bg-slate-600'}`}></div>
+                            <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${globalSpecs.isActive ? 'translate-x-4' : ''}`}></div>
+                          </div>
+                        </label>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-xs font-bold text-slate-500 uppercase">OS</label>
+                          <select 
+                            value={globalSpecs.os}
+                            onChange={(e) => setGlobalSpecs({...globalSpecs, os: e.target.value})}
+                            className="w-full p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
+                          >
+                            <option value="7">Windows 7</option>
+                            <option value="8">Windows 8</option>
+                            <option value="10">Windows 10</option>
+                            <option value="11">Windows 11</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-bold text-slate-500 uppercase">RAM (GB)</label>
+                          <select 
+                            value={globalSpecs.ram}
+                            onChange={(e) => setGlobalSpecs({...globalSpecs, ram: parseInt(e.target.value)})}
+                            className="w-full p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
+                          >
+                            <option value="4">4 GB</option>
+                            <option value="8">8 GB</option>
+                            <option value="16">16 GB</option>
+                            <option value="32">32 GB</option>
+                            <option value="64">64+ GB</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-bold text-slate-500 uppercase">CPU</label>
+                          <select 
+                            value={globalSpecs.cpuTier}
+                            onChange={(e) => setGlobalSpecs({...globalSpecs, cpuTier: parseInt(e.target.value)})}
+                            className="w-full p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
+                          >
+                            <option value="1">Basic Dual Core (Older Intel/AMD)</option>
+                            <option value="2">Standard Quad Core (i3 / Ryzen 3)</option>
+                            <option value="3">Solid 6-Core (i5 / Ryzen 5)</option>
+                            <option value="4">High-End 8+ Core (i7/i9 / Ryzen 7/9)</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-bold text-slate-500 uppercase">GPU</label>
+                          <select 
+                            value={globalSpecs.gpuTier}
+                            onChange={(e) => setGlobalSpecs({...globalSpecs, gpuTier: parseInt(e.target.value)})}
+                            className="w-full p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
+                          >
+                            <option value="1">Integrated (Intel HD / AMD APU)</option>
+                            <option value="2">Entry Level (GTX 1050 / RX 560)</option>
+                            <option value="3">Mid Range (RTX 3060 / RX 6600)</option>
+                            <option value="4">High End (RTX 4070 / RX 7800)</option>
+                            <option value="5">Ultra (RTX 4090 / RX 7900 XTX)</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
            </div>
         </div>
 
@@ -2751,7 +3260,11 @@ const SecretArea: React.FC = () => {
           ) : (
             <div className="space-y-12">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {paginatedData.map((item, idx) => (
+                {paginatedData.map((item, idx) => {
+                      const compStatus = globalSpecs.isActive ? checkCompatibilityStatus(globalSpecs, item.systemReqs) : null;
+                      const isFail = compStatus === 'fail';
+                      
+                      return (
                       <motion.div 
                           layout
                           key={item.id}
@@ -2759,13 +3272,27 @@ const SecretArea: React.FC = () => {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: idx * 0.05 }}
                           whileHover={{ y: -8, transition: { duration: 0.2 } }}
-                          className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden cursor-pointer hover:shadow-2xl hover:shadow-primary-900/10 hover:border-primary-500/30 transition-all relative flex flex-col"
+                          className={`group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden cursor-pointer hover:shadow-2xl hover:shadow-primary-900/10 hover:border-primary-500/30 transition-all relative flex flex-col ${isFail ? 'opacity-50 grayscale hover:grayscale-0 hover:opacity-100' : ''}`}
                           onClick={() => setSelectedResource(item)}
                       >
                           <div className="aspect-[3/4] relative overflow-hidden bg-slate-100 dark:bg-slate-950">
                             <img src={item.coverImage} alt={item.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-90 group-hover:opacity-100" />
                             <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent opacity-90"></div>
-                            {item.isPinned && (
+                            
+                            {compStatus && compStatus !== 'unknown' && (
+                                <div className="absolute top-3 right-3 z-30">
+                                    <div className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1 border ${
+                                        compStatus === 'pass' ? 'bg-emerald-500/90 text-white border-emerald-400' : 
+                                        compStatus === 'warn' ? 'bg-yellow-500/90 text-white border-yellow-400' : 
+                                        'bg-red-500/90 text-white border-red-400'
+                                    }`}>
+                                        <Icon name={compStatus === 'pass' ? 'CheckCircle' : compStatus === 'warn' ? 'AlertTriangle' : 'X'} size={12} />
+                                        {compStatus === 'pass' ? 'Runs Great' : compStatus === 'warn' ? 'Might Struggle' : 'Won\'t Run'}
+                                    </div>
+                                </div>
+                            )}
+
+                            {item.isPinned && !compStatus && (
                                 <div className="absolute top-3 left-3 z-20">
                                     <div className="bg-yellow-500 text-white p-1.5 rounded-lg shadow-lg border border-white/20">
                                         <Icon name="Pin" size={16} />
@@ -2775,28 +3302,28 @@ const SecretArea: React.FC = () => {
                             {item.category === 'steamtools' ? (
                                 <>
                                     {item.gameId && (
-                                        <div className="absolute top-3 right-3 px-2 py-1 bg-black/60 backdrop-blur-md rounded-md border border-white/10 text-[10px] font-mono font-bold text-white shadow-sm">
+                                        <div className={`absolute top-3 ${compStatus ? 'left-3' : 'right-3'} px-2 py-1 bg-black/60 backdrop-blur-md rounded-md border border-white/10 text-[10px] font-mono font-bold text-white shadow-sm`}>
                                             ID: {item.gameId}
                                         </div>
                                     )}
                                 </>
                             ) : (
-                                <div className={`absolute top-3 right-3 px-2 py-1 bg-white/90 dark:bg-black/60 backdrop-blur-md rounded-md border border-slate-200 dark:border-white/10 text-[10px] font-mono font-bold text-primary-600 dark:text-primary-400`}>
+                                <div className={`absolute top-3 ${compStatus ? 'left-3' : 'right-3'} px-2 py-1 bg-white/90 dark:bg-black/60 backdrop-blur-md rounded-md border border-slate-200 dark:border-white/10 text-[10px] font-mono font-bold text-primary-600 dark:text-primary-400`}>
                                     {item.repackSize}
                                 </div>
                             )}
-                            <div className={`absolute top-3 ${item.isPinned ? 'left-12' : 'left-3'} px-2 py-1 bg-primary-600 text-white rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg transition-all`}>
+                            <div className={`absolute top-3 ${item.isPinned && !compStatus ? 'left-12' : 'left-3'} px-2 py-1 bg-primary-600 text-white rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg transition-all`}>
                               {item.id}
                             </div>
                             {item.category === 'hypervisor' && (
-                                <div className={`absolute top-10 right-3 z-20`}>
+                                <div className={`absolute top-10 ${compStatus ? 'left-3' : 'right-3'} z-20`}>
                                     <div className="bg-red-600 text-white px-2 py-1 rounded-lg shadow-lg border border-red-400/30 text-[10px] font-black tracking-widest">
                                         HV
                                     </div>
                                 </div>
                             )}
                             {item.isFree && (
-                                <div className={`absolute ${item.category === 'hypervisor' ? 'top-20' : 'top-10'} right-3 px-2 py-1 bg-emerald-500 text-white rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1 z-20`}>
+                                <div className={`absolute ${item.category === 'hypervisor' ? 'top-20' : 'top-10'} ${compStatus ? 'left-3' : 'right-3'} px-2 py-1 bg-emerald-500 text-white rounded-md text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1 z-20`}>
                                     <Icon name="Tag" size={12} /> Free
                                 </div>
                             )}
@@ -2811,15 +3338,31 @@ const SecretArea: React.FC = () => {
                                   {item.name}
                                 </h3>
                                 <div className="flex items-center justify-between border-t border-white/20 pt-3 mt-1">
-                                  <span className="text-[10px] text-slate-200 font-mono font-bold bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded border border-white/10">{item.version}</span>
-                                  <span className="text-[10px] font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1 drop-shadow-sm">
-                                     Details <Icon name="ChevronRight" size={12} />
+                                  <span className="text-[10px] text-slate-200 font-mono font-bold bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded border border-white/10">
+                                    {item.category === 'steamtools' ? item.category.toUpperCase() : item.version}
                                   </span>
+                                  <div className="flex items-center gap-3">
+                                      <button
+                                          onClick={(e) => toggleStash(item.id, e)}
+                                          className={`p-1.5 rounded-md backdrop-blur-md transition-all ${
+                                              stash.includes(item.id) 
+                                              ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' 
+                                              : 'bg-black/40 text-white/70 hover:bg-black/60 hover:text-white border border-white/10'
+                                          }`}
+                                          title={stash.includes(item.id) ? "Remove from Stash" : "Add to Stash"}
+                                      >
+                                          <Icon name="Bookmark" size={12} className={stash.includes(item.id) ? "fill-current" : ""} />
+                                      </button>
+                                      <span className="text-[10px] font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1 drop-shadow-sm">
+                                         Details <Icon name="ChevronRight" size={12} />
+                                      </span>
+                                  </div>
                                 </div>
                             </div>
                           </div>
                       </motion.div>
-                ))}
+                      );
+                })}
               </div>
 
               {totalPages > 1 && (

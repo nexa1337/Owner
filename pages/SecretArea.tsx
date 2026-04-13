@@ -130,6 +130,16 @@ interface SteamAccount {
 }
 
 // --- HELPER FUNCTIONS ---
+const getFakeDownloads = (id: string) => {
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
+    const base = Math.abs(hash) % 80000 + 5000; // 5k to 85k
+    const daysSince = Math.floor((Date.now() - new Date('2024-01-01').getTime()) / (1000 * 60 * 60 * 24));
+    const dailyGrowth = Math.abs(hash) % 50 + 10;
+    const total = base + (daysSince * dailyGrowth);
+    return total > 1000 ? (total / 1000).toFixed(1) + 'K' : total.toString();
+};
+
 const getYoutubeEmbedUrl = (url: string) => {
   if (!url) return null;
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -1452,10 +1462,11 @@ const ResourceDetailModal: React.FC<{
                         </div>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                        <StatBox label="Repack Size" value={item.repackSize} icon="Database" color="text-primary-500 dark:text-sky-400" />
                        <StatBox label="Original Size" value={item.originalSize} icon="Server" color="text-slate-500 dark:text-slate-400" />
-                       <StatBox label="Languages" value={item.languages} icon="Globe" color="text-emerald-500 dark:text-emerald-400" fullWidth />
+                       <StatBox label="Languages" value={item.languages} icon="Globe" color="text-emerald-500 dark:text-emerald-400" />
+                       <StatBox label="Downloads" value={getFakeDownloads(item.id)} icon="Download" color="text-blue-500 dark:text-blue-400" />
                     </div>
                 )}
 
@@ -1926,6 +1937,94 @@ const SecretArea: React.FC = () => {
   const [scriptError, setScriptError] = useState(false);
   const [requestModalInitialTitle, setRequestModalInitialTitle] = useState('');
   
+  // Terminal State
+  const [terminalHistory, setTerminalHistory] = useState<{type: string, text: string}[]>([
+    { type: 'system', text: 'N E X A 1337 OS v9.0.1 - SECURE TERMINAL' },
+    { type: 'system', text: 'Unauthorized access is strictly prohibited.' },
+    { type: 'system', text: 'Type "help" for available commands.' }
+  ]);
+  const [terminalInput, setTerminalInput] = useState('');
+  const [terminalMode, setTerminalMode] = useState<'normal' | 'password'>('normal');
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const terminalEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (terminalEndRef.current) {
+      terminalEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [terminalHistory]);
+
+  const handleTerminalSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cmd = terminalInput.trim();
+    if (!cmd) return;
+
+    const newHistory = [...terminalHistory];
+    
+    if (terminalMode === 'password') {
+      newHistory.push({ type: 'user', text: `guest@nexa-vault:~$ ${'*'.repeat(cmd.length)}` });
+    } else {
+      newHistory.push({ type: 'user', text: `guest@nexa-vault:~$ ${cmd}` });
+    }
+
+    const lowerCmd = cmd.toLowerCase();
+
+    if (terminalMode === 'password') {
+      if (cmd === 'Wolfspace') {
+        newHistory.push({ type: 'success', text: 'Access Granted. Decrypting Vault...' });
+        setIsUnlocked(true);
+        setShowHackerLoader(true);
+        setHackerProgress(0);
+        localStorage.setItem('secret_area_unlocked', 'true');
+        fetchData();
+        setFailedAttempts(0);
+        setTerminalMode('normal');
+      } else {
+        const fails = failedAttempts + 1;
+        setFailedAttempts(fails);
+        newHistory.push({ type: 'error', text: 'Access Denied. Invalid secret code.' });
+        if (fails >= 2) {
+           newHistory.push({ type: 'error', text: 'CRITICAL WARNING: MULTIPLE FAILED ATTEMPTS. INTRUSION COUNTERMEASURES ARMED.' });
+        }
+        setTerminalMode('normal');
+      }
+    } else {
+      if (lowerCmd === 'help') {
+        newHistory.push({ type: 'info', text: 'Available options:' });
+        newHistory.push({ type: 'info', text: '  [1] What is inside?' });
+        newHistory.push({ type: 'info', text: '  [2] Contact Support' });
+        newHistory.push({ type: 'info', text: '  [3] Enter Secret Code' });
+        newHistory.push({ type: 'info', text: '  clear - Clear terminal output' });
+      } else if (lowerCmd === '1') {
+        newHistory.push({ type: 'info', text: 'Inside the vault: Exclusive Repacks, Hypervisors, Steam Tools, and Architect Software.' });
+      } else if (lowerCmd === '2') {
+        newHistory.push({ type: 'info', text: 'Support Channels:' });
+        newHistory.push({ type: 'info', text: '  WhatsApp: +212723242286' });
+        newHistory.push({ type: 'info', text: '  Instagram: @nexa1337' });
+        newHistory.push({ type: 'info', text: '  Email: support@nexa1337.com' });
+      } else if (lowerCmd === '3') {
+        newHistory.push({ type: 'system', text: 'Please enter the Secret Code:' });
+        setTerminalMode('password');
+      } else if (lowerCmd === 'clear') {
+        setTerminalHistory([]);
+        setTerminalInput('');
+        return;
+      } else if (lowerCmd === 'login wolfspace' || cmd === 'Wolfspace') {
+        newHistory.push({ type: 'success', text: 'Access Granted. Decrypting Vault...' });
+        setIsUnlocked(true);
+        setShowHackerLoader(true);
+        setHackerProgress(0);
+        localStorage.setItem('secret_area_unlocked', 'true');
+        fetchData();
+      } else {
+        newHistory.push({ type: 'error', text: `Command not found: ${cmd}. Type "help" for options.` });
+      }
+    }
+
+    setTerminalHistory(newHistory);
+    setTerminalInput('');
+  };
+  
   // Global System Filter
   const [globalSpecs, setGlobalSpecs] = useState({
     ram: 16,
@@ -2096,7 +2195,7 @@ const SecretArea: React.FC = () => {
   };
 
   useEffect(() => {
-    if (isUnlocked) {
+    if (isUnlocked && !showHackerLoader) {
         const t1 = setTimeout(() => {
             const id = Date.now();
             setNotifications(prev => [...prev, {
@@ -2106,7 +2205,7 @@ const SecretArea: React.FC = () => {
                 time: 'Now'
             }]);
             setTimeout(() => setNotifications(prev => prev.filter(n => n.id !== id)), 6000);
-        }, 1500);
+        }, 5000);
 
         const t2 = setTimeout(() => {
             const id = Date.now() + 1;
@@ -2118,11 +2217,11 @@ const SecretArea: React.FC = () => {
                 isAr: true
             }]);
             setTimeout(() => setNotifications(prev => prev.filter(n => n.id !== id)), 6000);
-        }, 8000); 
+        }, 12000); 
 
         return () => { clearTimeout(t1); clearTimeout(t2); };
     }
-  }, [isUnlocked]);
+  }, [isUnlocked, showHackerLoader]);
 
   // Math Game Functions
   const startMathGame = () => {
@@ -2536,21 +2635,22 @@ const SecretArea: React.FC = () => {
 
   if (!isUnlocked) {
     return (
-      <div className="w-full h-screen fixed inset-0 z-[200] flex items-center justify-center bg-slate-50 dark:bg-slate-950 overflow-hidden font-sans transition-colors duration-300">
-        <div className="absolute inset-0 z-0 pointer-events-none">
-           <motion.div 
-             animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.3, 0.2] }} 
-             transition={{ duration: 10, repeat: Infinity }}
-             className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary-500/10 dark:bg-primary-900/20 rounded-full blur-[120px]"
-           />
-           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03]"></div>
-        </div>
+      <div className="w-full h-screen fixed inset-0 z-[200] bg-slate-50 dark:bg-slate-950 overflow-y-auto font-sans transition-colors duration-300">
+        <div className="min-h-full w-full flex items-center justify-center p-4 py-8 relative">
+          <div className="fixed inset-0 z-0 pointer-events-none">
+             <motion.div 
+               animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.3, 0.2] }} 
+               transition={{ duration: 10, repeat: Infinity }}
+               className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary-500/10 dark:bg-primary-900/20 rounded-full blur-[120px]"
+             />
+             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03]"></div>
+          </div>
 
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95, y: 20 }} 
-          animate={{ opacity: 1, scale: 1, y: 0 }} 
-          className="w-full max-w-[420px] mx-4 relative z-10"
-        >
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95, y: 20 }} 
+            animate={{ opacity: 1, scale: 1, y: 0 }} 
+            className="w-full max-w-[420px] relative z-10"
+          >
           <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.1)] dark:shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden relative group">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1 bg-gradient-to-r from-transparent via-primary-500 to-transparent opacity-50 group-hover:opacity-100 transition-opacity"></div>
             
@@ -2667,65 +2767,65 @@ const SecretArea: React.FC = () => {
                    <div className="text-center">
                       <div className="w-20 h-20 mx-auto bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-950 rounded-[1.5rem] flex items-center justify-center shadow-inner border border-slate-200 dark:border-white/5 mb-6 relative">
                          <div className="absolute inset-0 bg-primary-500/10 rounded-[1.5rem] blur-lg"></div>
-                         <Icon name="Lock" size={32} className="text-primary-500 relative z-10 drop-shadow-sm" />
+                         <Icon name="Terminal" size={32} className="text-primary-500 relative z-10 drop-shadow-sm" />
                       </div>
                       <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-1">Restricted Access</h2>
                       <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.3em]">Security Protocol Alpha</p>
                    </div>
-                   <form onSubmit={handleUnlock} className="space-y-4">
-                      <div className="relative group/input">
-                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within/input:text-primary-500 transition-colors">
-                            <Icon name="Key" size={18} />
-                         </div>
-                         <input 
-                            type="password" 
-                            value={password} 
-                            onChange={e => setPassword(e.target.value)} 
-                            placeholder="ENTER SECRET KEY" 
-                            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 group-hover/input:border-slate-300 dark:group-hover/input:border-slate-700 focus:border-primary-500/50 rounded-xl pl-12 pr-4 py-4 font-mono text-sm text-slate-900 dark:text-white placeholder:text-slate-400 outline-none transition-all focus:ring-4 focus:ring-primary-500/10 text-center tracking-[0.2em]"
-                         />
+                   
+                   <div className="bg-white dark:bg-black rounded-xl border border-slate-300 dark:border-slate-800 overflow-hidden flex flex-col h-[200px] sm:h-[240px] md:h-[260px] shadow-inner">
+                      <div className="bg-slate-100 dark:bg-slate-900 px-3 py-2 flex items-center gap-2 border-b border-slate-300 dark:border-slate-800 shrink-0">
+                        <div className="flex gap-1.5">
+                          <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+                          <div className="w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
+                          <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+                        </div>
+                        <div className="flex-1 text-center text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400">
+                          guest@nexa-vault ~ bash
+                        </div>
                       </div>
-                      <AnimatePresence>
-                        {error && (
-                          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                            <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg p-2.5 text-center">
-                               <p className="text-red-600 dark:text-red-400 text-[10px] font-bold uppercase tracking-wide flex items-center justify-center gap-1.5"><Icon name="Bug" size={12} /> {error}</p>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                      <div className="space-y-3 pt-2">
-                         <button type="submit" className="w-full px-4 py-3.5 rounded-xl bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white font-bold text-[10px] md:text-xs uppercase tracking-wider transition-all shadow-lg shadow-primary-500/25 flex items-center justify-center gap-2 active:scale-95">
-                            <Icon name="CheckCircle" size={14} /> Verify Key
-                         </button>
-                         <button type="button" onClick={startMathGame} className="w-full px-4 py-3.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-bold text-[10px] md:text-xs uppercase tracking-wider transition-colors text-center flex items-center justify-center gap-2 border border-transparent hover:border-blue-300 dark:hover:border-blue-600">
-                            <Icon name="Cpu" size={14} /> Crack Code (Math Game)
-                         </button>
-                      </div>
-                      <Link to="/" className="block text-center text-[10px] font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors mt-4">
-                          ← Return Home
-                      </Link>
-                   </form>
-                   <div className="pt-6 border-t border-slate-200 dark:border-slate-800/50 space-y-4">
-                      <div className="bg-slate-50 dark:bg-slate-800/30 rounded-lg p-3 border border-slate-200 dark:border-slate-800 flex gap-3 items-start">
-                         <Icon name="HelpCircle" size={16} className="text-slate-400 mt-0.5 shrink-0" />
-                         <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed font-medium">Don't have a secret key? Contact <span className="text-slate-700 dark:text-slate-200 font-bold">Admin</span> via social media.</p>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                         <a href={INSTAGRAM_LINK} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-pink-500/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all group">
-                            <Icon name="Instagram" size={14} className="text-slate-500 group-hover:text-pink-500" />
-                            <span className="text-[9px] font-bold text-slate-500 group-hover:text-pink-500 uppercase tracking-wider">Instagram</span>
-                         </a>
-                         <a href={DISCORD_LINK} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-500/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all group">
-                            <Icon name="Discord" size={14} className="text-slate-500 group-hover:text-indigo-500" />
-                            <span className="text-[9px] font-bold text-slate-500 group-hover:text-indigo-500 uppercase tracking-wider">Discord</span>
-                         </a>
+                      <div className="flex-1 p-3 overflow-y-auto font-mono text-xs custom-scrollbar" onClick={() => document.getElementById('terminal-input')?.focus()}>
+                        {terminalHistory.map((line, i) => (
+                          <div key={i} className={`mb-1 ${
+                            line.type === 'system' ? 'text-blue-600 dark:text-blue-400 font-bold' :
+                            line.type === 'user' ? 'text-slate-800 dark:text-slate-300' :
+                            line.type === 'error' ? 'text-red-600 dark:text-red-400' :
+                            line.type === 'success' ? 'text-green-600 dark:text-green-400 font-bold' :
+                            'text-slate-600 dark:text-slate-400'
+                          }`}>
+                            {line.text}
+                          </div>
+                        ))}
+                        <form onSubmit={handleTerminalSubmit} className="flex items-center mt-2">
+                          <span className="text-green-600 dark:text-green-500 font-bold mr-2 shrink-0">guest@nexa-vault:~$</span>
+                          <input 
+                            id="terminal-input"
+                            type={terminalMode === 'password' ? 'password' : 'text'} 
+                            value={terminalInput}
+                            onChange={(e) => setTerminalInput(e.target.value)}
+                            className="flex-1 bg-transparent outline-none text-slate-800 dark:text-slate-200 font-mono"
+                            autoFocus
+                            autoComplete="off"
+                            spellCheck="false"
+                          />
+                        </form>
+                        <div ref={terminalEndRef} />
                       </div>
                    </div>
+
+                   <div className="space-y-3 pt-2">
+                      <button type="button" onClick={startMathGame} className="w-full px-4 py-3.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-bold text-[10px] md:text-xs uppercase tracking-wider transition-colors text-center flex items-center justify-center gap-2 border border-transparent hover:border-blue-300 dark:hover:border-blue-600">
+                         <Icon name="Cpu" size={14} /> Crack Code (Math Game)
+                      </button>
+                   </div>
+                   <Link to="/" className="block text-center text-[10px] font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors mt-4">
+                       ← Return Home
+                   </Link>
                 </div>
             )}
           </div>
         </motion.div>
+        </div>
       </div>
     );
   }
@@ -2738,7 +2838,7 @@ const SecretArea: React.FC = () => {
           <motion.div
             initial={{ opacity: 1 }}
             exit={{ opacity: 0, transition: { duration: 0.8, ease: "easeInOut" } }}
-            className="fixed inset-0 z-[9999] bg-slate-950 flex flex-col items-center justify-center p-4 overflow-hidden"
+            className="fixed inset-0 z-[9999] bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4 overflow-hidden transition-colors duration-300"
           >
             {/* Modern Background Elements */}
             <div className="absolute inset-0 z-0 pointer-events-none">
@@ -2747,10 +2847,10 @@ const SecretArea: React.FC = () => {
                  transition={{ duration: 8, repeat: Infinity }}
                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary-500/10 rounded-full blur-[120px]"
                />
-               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.05]"></div>
+               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03] dark:opacity-[0.05]"></div>
                
                {/* Grid overlay */}
-               <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_80%_80%_at_50%_50%,#000_20%,transparent_100%)]"></div>
+               <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.03)_1px,transparent_1px)] dark:bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_80%_80%_at_50%_50%,#000_20%,transparent_100%)]"></div>
             </div>
             
             <div className="relative z-10 w-full max-w-lg flex flex-col items-center">
@@ -2771,31 +2871,31 @@ const SecretArea: React.FC = () => {
                   transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                   className="absolute inset-6 bg-primary-500/10 rounded-full blur-md"
                 />
-                <div className="w-20 h-20 bg-slate-900 border border-primary-500/60 rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(14,165,233,0.3)] relative z-10">
-                  <Icon name="ShieldAlert" size={32} className="text-primary-400 animate-pulse" />
+                <div className="w-20 h-20 bg-white dark:bg-slate-900 border border-primary-500/60 rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(14,165,233,0.2)] dark:shadow-[0_0_40px_rgba(14,165,233,0.3)] relative z-10">
+                  <Icon name="ShieldAlert" size={32} className="text-primary-500 dark:text-primary-400 animate-pulse" />
                 </div>
               </div>
 
-              <h2 className="text-white text-2xl md:text-3xl font-black tracking-[0.3em] uppercase mb-4 text-center relative">
+              <h2 className="text-slate-900 dark:text-white text-2xl md:text-3xl font-black tracking-[0.3em] uppercase mb-4 text-center relative">
                 <span className="relative z-10">Secret Vault</span>
                 <motion.span 
                   animate={{ opacity: [0, 1, 0], x: [-5, 5, -5] }}
                   transition={{ duration: 0.2, repeat: Infinity, repeatType: "mirror" }}
-                  className="absolute inset-0 text-primary-500 opacity-50 blur-[2px] -z-10"
+                  className="absolute inset-0 text-primary-500 opacity-30 dark:opacity-50 blur-[2px] -z-10"
                 >
                   Secret Vault
                 </motion.span>
               </h2>
               
               {/* Terminal Output */}
-              <div className="w-full bg-black/50 border border-primary-500/20 rounded-lg p-4 mb-8 h-32 flex flex-col justify-end overflow-hidden relative backdrop-blur-sm">
+              <div className="w-full bg-slate-100/80 dark:bg-black/50 border border-primary-500/20 rounded-lg p-4 mb-8 h-32 flex flex-col justify-end overflow-hidden relative backdrop-blur-sm">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary-500/50 to-transparent opacity-50"></div>
                 {terminalLines.map((line, i) => (
                   <motion.div 
                     key={i}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="text-primary-400 font-mono text-xs md:text-sm mb-1"
+                    className="text-primary-600 dark:text-primary-400 font-mono text-xs md:text-sm mb-1"
                   >
                     {line}
                   </motion.div>
@@ -2809,7 +2909,7 @@ const SecretArea: React.FC = () => {
               
               {/* Progress Bar */}
               <div className="w-full relative">
-                <div className="w-full h-2 bg-slate-800/80 rounded-full overflow-hidden relative border border-slate-700/50 backdrop-blur-sm">
+                <div className="w-full h-2 bg-slate-200 dark:bg-slate-800/80 rounded-full overflow-hidden relative border border-slate-300 dark:border-slate-700/50 backdrop-blur-sm">
                   <motion.div 
                     className="absolute top-0 left-0 h-full bg-gradient-to-r from-indigo-600 via-primary-500 to-cyan-400"
                     initial={{ width: "0%" }}
@@ -2824,12 +2924,12 @@ const SecretArea: React.FC = () => {
                   />
                 </div>
                 
-                <div className="w-full flex justify-between mt-4 text-slate-400 font-mono text-[10px] md:text-xs uppercase tracking-widest">
+                <div className="w-full flex justify-between mt-4 text-slate-500 dark:text-slate-400 font-mono text-[10px] md:text-xs uppercase tracking-widest">
                   <span className="flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-ping"></span>
                     SYS.SYNC.ACTIVE
                   </span>
-                  <span className="text-primary-400 font-bold">{hackerProgress}%</span>
+                  <span className="text-primary-600 dark:text-primary-400 font-bold">{hackerProgress}%</span>
                 </div>
               </div>
             </div>
@@ -3342,6 +3442,9 @@ const SecretArea: React.FC = () => {
                                     {item.category === 'steamtools' ? item.category.toUpperCase() : item.version}
                                   </span>
                                   <div className="flex items-center gap-3">
+                                      <div className="flex items-center gap-1 text-[10px] text-slate-200 font-mono font-bold bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded border border-white/10">
+                                          <Icon name="Download" size={10} /> {getFakeDownloads(item.id)}
+                                      </div>
                                       <button
                                           onClick={(e) => toggleStash(item.id, e)}
                                           className={`p-1.5 rounded-md backdrop-blur-md transition-all ${

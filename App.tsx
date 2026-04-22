@@ -1,15 +1,12 @@
 
 import React, { useEffect } from 'react';
-import { HashRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 
 import Header from './components/Header';
 import BottomNav from './components/BottomNav';
-import Home from './pages/Home';
 import Roadmap from './pages/Roadmap';
 import CategoryDetail from './pages/CategoryDetail';
-import Contact from './pages/Contact';
-import About from './pages/About';
 import SecretArea from './pages/SecretArea';
 import PersonalFinance from './pages/PersonalFinance';
 import Footer from './components/Footer';
@@ -24,12 +21,16 @@ const AppBehavior = () => {
     window.scrollTo(0, 0);
   }, [pathname]);
 
-  // Force redirect to Home on initial mount (website reload)
-  useEffect(() => {
-    navigate('/', { replace: true });
-  }, []);
-
   return null;
+};
+
+// Protected routes logic
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const isUnlocked = localStorage.getItem('secret_area_unlocked') === 'true';
+  if (!isUnlocked) {
+    return <Navigate to="/" replace />;
+  }
+  return <>{children}</>;
 };
 
 const App: React.FC = () => {
@@ -41,13 +42,10 @@ const App: React.FC = () => {
         
         <main className="flex-grow">
           <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/roadmap" element={<Roadmap />} />
-            <Route path="/roadmap/:id" element={<CategoryDetail />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/secret" element={<SecretArea />} />
-            <Route path="/personal-space" element={<PersonalFinance />} />
+            <Route path="/" element={<SecretArea />} />
+            <Route path="/roadmap" element={<ProtectedRoute><Roadmap /></ProtectedRoute>} />
+            <Route path="/roadmap/:id" element={<ProtectedRoute><CategoryDetail /></ProtectedRoute>} />
+            <Route path="/personal-space" element={<ProtectedRoute><PersonalFinance /></ProtectedRoute>} />
           </Routes>
           <Footer />
         </main>

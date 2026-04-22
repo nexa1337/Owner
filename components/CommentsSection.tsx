@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SiWolframlanguage } from 'react-icons/si';
 import Icon from './Icon';
@@ -23,6 +23,29 @@ const AVAILABLE_TAGS = [
   "Great Story 📖", "Hardcore 💀", "Chill ☕"
 ];
 
+const FAKE_NAMES = ['Ghost_Protocol', 'Ahmed_DZ', 'Simox1337', 'LeHacker99', 'Carlos_Dev', 'Ivan_B', 'Wang_Wei', 'Kenji_San', 'Min_Jae', 'ShadowWolf', 'Kira99', 'Youssef_DZ', 'Sakura_01'];
+const FAKE_TEXTS = [
+  { lang: 'en', text: 'Works perfectly! Thanks for the upload.' },
+  { lang: 'ar', text: 'شغال 100%، شكرا جزيلا على المجهود' },
+  { lang: 'darija', text: 'nadi canadi khouya, lay 7fdek' },
+  { lang: 'fr', text: 'Super, installation très facile. Merci!' },
+  { lang: 'es', text: '¡Funciona de maravilla! Saludos desde España.' },
+  { lang: 'ru', text: 'Всё работает отлично, спасибо автору!' },
+  { lang: 'zh', text: '非常感谢，下载速度很快，完美运行！' },
+  { lang: 'ja', text: '完璧に動作しました。ありがとうございます！' },
+  { lang: 'ko', text: '잘 작동합니다. 공유해주셔서 감사합니다!' },
+  { lang: 'en', text: 'Been looking for this everywhere. You are a lifesaver.' },
+  { lang: 'ar', text: 'أسطورة، جاري التحميل والتجربة' },
+  { lang: 'darija', text: 'tbarkellah 3lik a sat, dima top' }
+];
+
+function seededRandom(seed: number) {
+    let t = seed += 0x6D2B79F5;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+}
+
 const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxbQKmoUUH4KzLmkAYZMGpoORPDTFYTzqCpnScEFIw5ngQ1cgzvFWU5fq0OXe2M5Ref/exec';
 
 export const CommentsSection: React.FC<{ itemId: string }> = ({ itemId }) => {
@@ -33,19 +56,53 @@ export const CommentsSection: React.FC<{ itemId: string }> = ({ itemId }) => {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
 
+  const fakeComments = useMemo(() => {
+    let hash = 0;
+    for (let i = 0; i < itemId.length; i++) hash = itemId.charCodeAt(i) + ((hash << 5) - hash);
+    
+    const numFakes = Math.floor(seededRandom(hash) * 4) + 2; // 2 to 5 comments
+    const fakes: Comment[] = [];
+    
+    for (let i = 0; i < numFakes; i++) {
+        const seed = hash + i * 100;
+        const nameIdx = Math.floor(seededRandom(seed) * FAKE_NAMES.length);
+        const textIdx = Math.floor(seededRandom(seed + 1) * FAKE_TEXTS.length);
+        const tagIdx = Math.floor(seededRandom(seed + 2) * AVAILABLE_TAGS.length);
+        
+        const daysAgo = Math.floor(seededRandom(seed + 3) * 30) + 1;
+        const d = new Date();
+        d.setDate(d.getDate() - daysAgo);
+
+        fakes.push({
+            id: `fake-${itemId}-${i}`,
+            itemId,
+            author: FAKE_NAMES[nameIdx],
+            text: FAKE_TEXTS[textIdx].text,
+            tags: [AVAILABLE_TAGS[tagIdx]],
+            reactions: {
+                like: Math.floor(seededRandom(seed + 4) * 50) + 5,
+                dislike: Math.floor(seededRandom(seed + 5) * 3),
+                love: Math.floor(seededRandom(seed + 6) * 20) + 1
+            },
+            timestamp: d.toISOString()
+        });
+    }
+    
+    return fakes.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [itemId]);
+
   // Load comments
   useEffect(() => {
     const loadComments = async () => {
       setFetching(true);
+      let loadedComments: Comment[] = [];
       try {
         // Try fetching from Google Sheet
         const response = await fetch(`${API_ENDPOINT}?action=getComments&itemId=${itemId}`);
         if (response.ok) {
           const data = await response.json();
           if (data && data.comments) {
-            setComments(data.comments);
-            setFetching(false);
-            return;
+            loadedComments = data.comments;
           }
         }
       } catch (error) {
@@ -53,15 +110,21 @@ export const CommentsSection: React.FC<{ itemId: string }> = ({ itemId }) => {
       }
 
       // Fallback to local storage if script fails or isn't updated
-      const localData = localStorage.getItem(`comments_${itemId}`);
-      if (localData) {
-        setComments(JSON.parse(localData));
+      if (loadedComments.length === 0) {
+          const localData = localStorage.getItem(`comments_${itemId}`);
+          if (localData) {
+            loadedComments = JSON.parse(localData);
+          }
       }
+      
+      // Merge real and fake comments, sort by date
+      const allComments = [...loadedComments, ...fakeComments].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      setComments(allComments);
       setFetching(false);
     };
 
     loadComments();
-  }, [itemId]);
+  }, [itemId, fakeComments]);
 
   const toggleTag = (tag: string) => {
     setSelectedTags(prev => 

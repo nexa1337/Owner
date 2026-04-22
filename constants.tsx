@@ -11,11 +11,9 @@ export const SOCIAL_LINKS = {
 };
 
 export const NAV_ITEMS: NavItem[] = [
-  { label: 'Home', path: '/', iconName: 'Home' },
-  { label: 'Space', path: '/roadmap', iconName: 'Rocket' },
-  { label: 'About Us', path: '/about', iconName: 'Info' },
-  { label: 'Contact', path: '/contact', iconName: 'Mail' },
-  { label: 'Tool', path: 'https://nexa1337.github.io/tool/', iconName: 'Wrench', isExternal: true },
+  { label: 'Secret Area', path: '/', iconName: 'Lock' },
+  { label: 'Personal Space', path: '/personal-space', iconName: 'Activity' },
+  { label: 'Roadmap', path: '/roadmap', iconName: 'Rocket' },
 ];
 
 export const CATEGORIES: CategoryData[] = [

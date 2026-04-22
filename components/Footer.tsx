@@ -6,7 +6,8 @@ export const NEXA_ECOSYSTEM_LINKS = [
   { name: 'N E X A 1337', url: 'https://nexa1337.github.io/nexa1337', clicks: '342K' },
   { name: 'N E X A 1337 - Portfolio', url: 'https://nexa1337.github.io/Owner', clicks: '215K' },
   { name: 'N E X A 1337 - Tool', url: 'https://nexa1337.github.io/tool', clicks: '189K' },
-  { name: 'N E X A 1337 - Tool v2', url: 'https://nexa1337.github.io/toolv2', clicks: 'New' },
+  { name: 'N E X A 1337 - Tool v2', url: 'https://nexa1337.github.io/toolv2', clicks: '92K' },
+  { name: 'N E X A 1337 - School', url: 'https://nexa1337.github.io/school', clicks: '54K' },
   { name: 'N E X A 1337 - Digital Store', url: 'https://nexa1337.github.io/digitalstore', clicks: '128K' }
 ];
 
@@ -16,6 +17,11 @@ const Footer: React.FC = () => {
   return (
     <>
       <footer className="w-full py-8 text-center text-slate-500 dark:text-slate-400 text-sm pb-24 md:pb-8">
+        <div className="flex flex-wrap items-center justify-center gap-6 mb-4 font-medium">
+          <a href="/#/" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Secret Area</a>
+          <a href="/#/personal-space" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Personal Space</a>
+          <a href="/#/roadmap" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Roadmap</a>
+        </div>
         <p>
           © 2026 <button onClick={() => setIsPopupOpen(true)} className="font-bold text-slate-700 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">N E X A 1337</button>. All rights reserved.
         </p>

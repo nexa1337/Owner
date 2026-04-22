@@ -60,47 +60,6 @@ const Header: React.FC = () => {
             </div>
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-1">
-            {NAV_ITEMS.map((item) => {
-              if (item.isExternal) {
-                const isTool = item.label === 'Tool';
-                return (
-                  <a
-                    key={item.path}
-                    href={item.path}
-                    target="_blank"
-                    rel="noreferrer"
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                      isTool 
-                        ? 'bg-gradient-to-r from-primary-600 to-purple-600 text-white hover:shadow-lg hover:scale-105 hover:shadow-primary-500/30 relative overflow-hidden group/tool' 
-                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50'
-                    }`}
-                  >
-                    {isTool && (
-                       <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/tool:translate-x-full transition-transform duration-1000"></span>
-                    )}
-                    {item.label}
-                  </a>
-                );
-              }
-              
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    location.pathname === item.path 
-                      ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white' 
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50'
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
-
           {/* Right Actions */}
           <div className="flex items-center gap-3 md:gap-4">
             <MoroccanFlag />

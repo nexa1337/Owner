@@ -1939,7 +1939,7 @@ const SecretArea: React.FC = () => {
   
   // Terminal State
   const [terminalHistory, setTerminalHistory] = useState<{type: string, text: string}[]>([
-    { type: 'system', text: 'N E X A 1337 OS v9.0.1 - SECURE TERMINAL' },
+    { type: 'system', text: 'N E X A 1337 OS v9.0.1 - SECURE terminal' },
     { type: 'system', text: 'Unauthorized access is strictly prohibited.' },
     { type: 'system', text: 'Type "help" for available commands.' }
   ]);
@@ -1947,6 +1947,14 @@ const SecretArea: React.FC = () => {
   const [terminalMode, setTerminalMode] = useState<'normal' | 'password'>('normal');
   const [failedAttempts, setFailedAttempts] = useState(0);
   const terminalEndRef = useRef<HTMLDivElement>(null);
+
+  const secretBackgrounds = [
+    "https://canada1.discourse-cdn.com/flex036/uploads/retrogameboards/original/2X/8/892f6ed5a098a1428757d3b6220ad281eafcbe80.gif",
+    "https://media2.giphy.com/media/v1.Y2lkPTZjMDliOTUyZnY4YnZtdGNjbDNjdGhwbTdpbjFiOHBuYWJnbGw3cjVkczM3ZDZ5YyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/Rpl1sod1vCXK0L2SUN/giphy.gif",
+    "https://miro.medium.com/1*rv7bzPRCHMsOv1vI_gHyfg.gif",
+    "https://i.pinimg.com/originals/4c/d6/ea/4cd6eaa599851725aa5a195d162fb20d.gif"
+  ];
+  const [bgImage] = useState(() => secretBackgrounds[Math.floor(Math.random() * secretBackgrounds.length)]);
 
   useEffect(() => {
     if (terminalEndRef.current) {
@@ -2638,6 +2646,13 @@ const SecretArea: React.FC = () => {
       <div className="w-full h-screen fixed inset-0 z-[200] bg-slate-50 dark:bg-slate-950 overflow-y-auto font-sans transition-colors duration-300">
         <div className="min-h-full w-full flex items-center justify-center p-4 py-8 relative">
           <div className="fixed inset-0 z-0 pointer-events-none">
+             {bgImage && (
+                <div 
+                  className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30 dark:opacity-40"
+                  style={{ backgroundImage: `url(${bgImage})` }} 
+                />
+             )}
+             <div className="absolute inset-0 bg-slate-50/70 dark:bg-slate-950/70 backdrop-blur-[2px]"></div>
              <motion.div 
                animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.3, 0.2] }} 
                transition={{ duration: 10, repeat: Infinity }}

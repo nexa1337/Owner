@@ -18,9 +18,9 @@ const Footer: React.FC = () => {
     <>
       <footer className="w-full py-8 text-center text-slate-500 dark:text-slate-400 text-sm pb-24 md:pb-8">
         <div className="flex flex-wrap items-center justify-center gap-6 mb-4 font-medium">
-          <a href="/#/" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Secret Area</a>
-          <a href="/#/personal-space" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Personal Space</a>
-          <a href="/#/roadmap" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Roadmap</a>
+          <a href="/SecretArea/" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Secret Area</a>
+          <a href="/#/PersonalFinance" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Personal Space</a>
+          <a href="/#/Roadmap" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Roadmap</a>
         </div>
         <p>
           © 2026 <button onClick={() => setIsPopupOpen(true)} className="font-bold text-slate-700 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">N E X A 1337</button>. All rights reserved.

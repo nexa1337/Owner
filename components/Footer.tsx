@@ -8,8 +8,8 @@ export const NEXA_ECOSYSTEM_LINKS = [
   { name: 'N E X A 1337 - Portfolio', url: 'https://nexa1337.github.io/Owner', clicks: '215K' },
   { name: 'N E X A 1337 - Tool', url: 'https://nexa1337.github.io/tool', clicks: '189K' },
   { name: 'N E X A 1337 - Tool v2', url: 'https://nexa1337.github.io/toolv2', clicks: '92K' },
-  { name: 'N E X A 1337 - School', url: 'https://nexa1337.github.io/school', clicks: '54K' },
-  { name: 'N E X A 1337 - Digital Store', url: 'https://nexa1337.github.io/digitalstore', clicks: '128K' }
+  { name: 'N E X A 1337 - School', url: 'https://school-lime-psi.vercel.app/', clicks: '54K' },
+  { name: 'N E X A 1337 - Digital Store', url: 'https://digitalstore-iota-five.vercel.app/', clicks: '128K' }
 ];
 
 const Footer: React.FC = () => {

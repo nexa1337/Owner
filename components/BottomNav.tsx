@@ -141,7 +141,7 @@ const BottomNav: React.FC = () => {
                     <Icon name="ExternalLink" size={14} className="text-slate-500 relative z-10 group-hover:text-purple-400 transition-colors" />
                 </a>
 
-                <a href="https://nexa1337.github.io/school" target="_blank" rel="noreferrer" className="flex items-center justify-between p-3.5 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm transition-all group">
+                <a href="https://school-lime-psi.vercel.app/" target="_blank" rel="noreferrer" className="flex items-center justify-between p-3.5 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm transition-all group">
                     <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-100 dark:border-amber-500/20 group-hover:scale-110 transition-transform">
                             <Icon name="GraduationCap" size={18} />
@@ -154,7 +154,7 @@ const BottomNav: React.FC = () => {
                     <Icon name="ExternalLink" size={14} className="text-slate-300 dark:text-slate-500 group-hover:text-amber-500 transition-colors" />
                 </a>
 
-                <a href="https://linktr.ee/nexa1337" target="_blank" rel="noreferrer" className="flex items-center justify-between p-3.5 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm transition-all group">
+                <a href="https://digitalstore-iota-five.vercel.app/" target="_blank" rel="noreferrer" className="flex items-center justify-between p-3.5 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm transition-all group">
                     <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-100 dark:border-rose-500/20 group-hover:scale-110 transition-transform">
                             <Icon name="ShoppingCart" size={18} />

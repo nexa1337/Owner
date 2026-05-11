@@ -1251,6 +1251,45 @@ const SystemChecker: React.FC<{ reqs: {label: string, value: string}[] }> = ({ r
   );
 };
 
+const NoteModal: React.FC<{
+  content: string;
+  onClose: () => void;
+}> = ({ content, onClose }) => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+    onClick={onClose}
+  >
+    <motion.div
+      initial={{ scale: 0.95, opacity: 0, y: 10 }}
+      animate={{ scale: 1, opacity: 1, y: 0 }}
+      exit={{ scale: 0.95, opacity: 0, y: 10 }}
+      className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-2xl p-6 border border-slate-200 dark:border-slate-800 relative"
+      onClick={e => e.stopPropagation()}
+    >
+      <button 
+        onClick={onClose} 
+        className="absolute top-4 right-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 p-2 rounded-full transition-all"
+      >
+        <Icon name="X" size={16} />
+      </button>
+      <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 pr-8 flex items-center gap-2">
+        <Icon name="Info" size={20} className="text-emerald-500" /> Note
+      </h3>
+      <div className="text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed max-h-[60vh] overflow-y-auto whitespace-pre-wrap custom-scrollbar">
+        {content}
+      </div>
+      <div className="mt-6 flex justify-end">
+        <button onClick={onClose} className="px-5 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold rounded-xl hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors">
+          Close
+        </button>
+      </div>
+    </motion.div>
+  </motion.div>
+);
+
 const ResourceDetailModal: React.FC<{ 
   item: ResourceItem; 
   onClose: () => void;
@@ -1264,6 +1303,7 @@ const ResourceDetailModal: React.FC<{
   const [isTranslating, setIsTranslating] = useState(false);
   const [showArabic, setShowArabic] = useState(false);
   const [showHypervisorGuide, setShowHypervisorGuide] = useState(false);
+  const [noteModalContent, setNoteModalContent] = useState<string | null>(null);
 
   useEffect(() => {
     setActiveImage(item.galleryImages.length > 0 ? item.galleryImages[0] : item.coverImage);
@@ -1594,8 +1634,23 @@ const ResourceDetailModal: React.FC<{
                                     <div className="p-2 bg-white/10 rounded-full backdrop-blur-sm"><Icon name="Download" size={20} className="text-white sm:w-6 sm:h-6 animate-bounce" /></div>
                                     <div className="text-left sm:text-center">
                                         <div className="text-[10px] font-black text-primary-100 uppercase tracking-[0.2em] opacity-80">Master File</div>
-                                        <div className="text-sm sm:text-lg font-black text-white uppercase tracking-wider leading-none">Full Project ({item.repackSize})</div>
-                                        {item.links.fullNote && <div className="text-[10px] text-white/80 font-bold mt-1">{item.links.fullNote}</div>}
+                                        <div className="text-[11px] sm:text-lg font-black text-white uppercase tracking-wider leading-tight sm:leading-none break-all sm:break-normal">Full Project ({item.repackSize})</div>
+                                        {item.links.fullNote && (
+                                            <div className="mt-1 flex items-center gap-2">
+                                                <div className="text-[9px] sm:text-[10px] text-white/80 font-bold truncate max-w-[150px] sm:max-w-[200px]">
+                                                    {item.links.fullNote.length > 30 ? `${item.links.fullNote.substring(0, 30)}...` : item.links.fullNote}
+                                                </div>
+                                                {item.links.fullNote.length > 30 && (
+                                                    <button 
+                                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setNoteModalContent(item.links.fullNote!); }}
+                                                        className="flex items-center gap-1 text-[8px] sm:text-[9px] font-bold uppercase tracking-widest bg-white/20 text-white px-1.5 py-0.5 sm:px-2 sm:py-0.5 rounded hover:bg-white/30 transition-colors shadow-sm"
+                                                    >
+                                                        <Icon name="Info" size={12} className="w-3 h-3" />
+                                                        <span>Read</span>
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </a>
@@ -1608,6 +1663,7 @@ const ResourceDetailModal: React.FC<{
                                 href={part.link} 
                                 icon="Server" 
                                 note={part.note}
+                                onNoteClick={(note) => setNoteModalContent(note)}
                             />
                         ))}
                         {item.links.parts.length === 0 && !item.links.full && (
@@ -1625,6 +1681,7 @@ const ResourceDetailModal: React.FC<{
                                 icon="Database" 
                                 secondary 
                                 note={mirror.note}
+                                onNoteClick={(note) => setNoteModalContent(note)}
                             />
                         ))}
                     </div>
@@ -1654,6 +1711,9 @@ const ResourceDetailModal: React.FC<{
       <AnimatePresence>
         {showHypervisorGuide && (
           <HypervisorGuideModal open={showHypervisorGuide} onClose={() => setShowHypervisorGuide(false)} />
+        )}
+        {noteModalContent && (
+          <NoteModal content={noteModalContent} onClose={() => setNoteModalContent(null)} />
         )}
       </AnimatePresence>
     </motion.div>
@@ -1711,18 +1771,37 @@ const Thumbnail: React.FC<{ src: string; isActive: boolean; onClick: () => void 
   );
 };
 
-const DownloadButton: React.FC<{ label: string; sub: string; href: string; icon: string; secondary?: boolean; note?: string }> = ({ label, sub, href, icon, secondary, note }) => (
-  <a href={href} target="_blank" rel="noreferrer" className={`group flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl border transition-all active:scale-95 hover:-translate-y-1 ${secondary ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-900 dark:hover:text-white' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 hover:border-primary-500/50 hover:text-primary-600 dark:hover:text-white'}`}>
-     <div className={`p-2 sm:p-2.5 rounded-lg shrink-0 transition-colors ${secondary ? 'bg-slate-100 dark:bg-slate-950 text-slate-500 group-hover:text-slate-800 dark:group-hover:text-slate-300' : 'bg-slate-200 dark:bg-slate-900 text-primary-600 dark:text-primary-500 group-hover:text-white group-hover:bg-primary-500'}`}>
-        <Icon name={icon} size={20} />
+const DownloadButton: React.FC<{ label: string; sub: string; href: string; icon: string; secondary?: boolean; note?: string; onNoteClick?: (note: string) => void }> = ({ label, sub, href, icon, secondary, note, onNoteClick }) => (
+  <div className={`relative group flex flex-col p-2 sm:p-4 rounded-xl border transition-all active:scale-95 hover:-translate-y-1 ${secondary ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 hover:border-primary-500/50'}`}>
+     <div className="flex items-center gap-2 sm:gap-4 flex-1">
+         <div className={`p-1.5 sm:p-2.5 rounded-lg shrink-0 transition-colors ${secondary ? 'bg-slate-100 dark:bg-slate-950 text-slate-500 group-hover:text-slate-800 dark:group-hover:text-slate-300' : 'bg-slate-200 dark:bg-slate-900 text-primary-600 dark:text-primary-500 group-hover:text-white group-hover:bg-primary-500'}`}>
+            <Icon name={icon} size={20} className="w-4 h-4 sm:w-5 sm:h-5" />
+         </div>
+         <div className="min-w-0 flex-1">
+            <div className="text-[8px] sm:text-[10px] font-bold uppercase tracking-widest opacity-60 mb-0.5 text-slate-500 dark:text-slate-400">{sub}</div>
+            <div className={`text-[9px] sm:text-sm font-bold break-all sm:break-words leading-tight ${secondary ? 'text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white' : 'text-slate-700 dark:text-slate-200 group-hover:text-primary-600 dark:group-hover:text-white'}`}>{label}</div>
+         </div>
+         <Icon name="ExternalLink" size={14} className={`shrink-0 w-3 h-3 sm:w-4 sm:h-4 opacity-50 sm:opacity-0 group-hover:opacity-100 transition-opacity ${secondary ? 'text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white' : 'text-slate-400 group-hover:text-primary-600 dark:group-hover:text-white'}`} />
      </div>
-     <div className="min-w-0 flex-1">
-        <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest opacity-60 mb-0.5">{sub}</div>
-        <div className="text-xs sm:text-sm font-bold truncate">{label}</div>
-        {note && <div className="text-[10px] text-emerald-500 font-bold mt-1 truncate">{note}</div>}
-     </div>
-     <Icon name="ExternalLink" size={14} className="ml-auto opacity-50 sm:opacity-0 group-hover:opacity-100 transition-opacity" />
-  </a>
+     <a href={href} target="_blank" rel="noreferrer" className="absolute inset-0 z-10" aria-label={label}></a>
+     
+     {note && (
+         <div className="relative z-20 mt-2 sm:mt-3 flex items-center justify-between border-t border-slate-200 dark:border-slate-700/50 pt-2">
+            <div className={`text-[9px] sm:text-[10px] font-bold truncate pr-2 flex-1 ${secondary ? 'text-slate-500 dark:text-slate-400' : 'text-emerald-600 dark:text-emerald-500'}`}>
+                {note.length > 40 ? `${note.substring(0, 40)}...` : note}
+            </div>
+            {note.length > 40 && onNoteClick && (
+                <button 
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); onNoteClick(note); }}
+                    className={`flex items-center gap-1 shrink-0 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 sm:px-2 sm:py-1 rounded transition-colors cursor-pointer ${secondary ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700' : 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-500/30'}`}
+                >
+                    <Icon name="Info" size={12} className="w-3 h-3" />
+                    <span>Read</span>
+                </button>
+            )}
+         </div>
+     )}
+  </div>
 );
 
 // --- LATEST INTEL PANEL ---
@@ -2465,6 +2544,7 @@ const SecretArea: React.FC = () => {
                 // Helper to extract note from link string
                 const extractNote = (val: string) => {
                     if (!val) return { link: '', note: '' };
+                    val = val.trim();
                     
                     // Format: Link | Note
                     if (val.includes('|')) {
@@ -2472,14 +2552,20 @@ const SecretArea: React.FC = () => {
                         return { link: parts[0].trim(), note: parts[1].trim() };
                     }
                     
-                    // Format: Link "Note"
-                    const quoteMatch = val.match(/^(.*)\s+"([^"]+)"$/);
+                    // Format: Link 'Note' or Link "Note"
+                    // Added \s* at the end just in case
+                    const singleQuoteMatch = val.match(/^(.*?)\s+'([^']+)'\s*$/);
+                    if (singleQuoteMatch) {
+                        return { link: singleQuoteMatch[1].trim(), note: singleQuoteMatch[2].trim() };
+                    }
+                    
+                    const quoteMatch = val.match(/^(.*?)\s+"([^"]+)"\s*$/);
                     if (quoteMatch) {
                         return { link: quoteMatch[1].trim(), note: quoteMatch[2].trim() };
                     }
 
                     // Format: Link (Note)
-                    const parenMatch = val.match(/^(.*)\s+\(([^)]+)\)$/);
+                    const parenMatch = val.match(/^(.*?)\s+\(([^)]+)\)\s*$/);
                     if (parenMatch) {
                         return { link: parenMatch[1].trim(), note: parenMatch[2].trim() };
                     }

@@ -23,7 +23,10 @@ const AVAILABLE_TAGS = [
   "Great Story 📖", "Hardcore 💀", "Chill ☕"
 ];
 
-const FAKE_NAMES = ['Ghost_Protocol', 'Ahmed_DZ', 'Simox1337', 'LeHacker99', 'Carlos_Dev', 'Ivan_B', 'Wang_Wei', 'Kenji_San', 'Min_Jae', 'ShadowWolf', 'Kira99', 'Youssef_DZ', 'Sakura_01'];
+const FAKE_NAMES = [
+  'Ghost_Protocol', 'Ahmed_DZ', 'Simox1337', 'LeHacker99', 'Carlos_Dev', 'Ivan_B', 'Wang_Wei', 'Kenji_San', 'Min_Jae', 'ShadowWolf', 'Kira99', 'Youssef_DZ', 'Sakura_01',
+  'Neo_Matrix', 'CyberNinja', 'Elite_Gamer', 'Dark_Knight', 'Tech_Guru99', 'Moha_Maroc', 'Sniper_Zero', 'Abdo_Sec', 'Ali_Pro', 'Hacker_DZ', 'Ninja_X', 'X3_Dragon', 'Omar_Gaming', 'Sami_Devz', 'Ryu_Street', 'Dr_Code', 'Agent_47', 'Rami_1337', 'Alex_Smith', 'Timo_Werner', 'Vlad_Russian', 'Luiz_Brasil', 'Akira_Japan', 'Kim_Seoul', 'Pio_Italy', 'Hans_Germany', 'Omar_EG', 'Sayed_KSA'
+];
 const FAKE_TEXTS = [
   { lang: 'en', text: 'Works perfectly! Thanks for the upload.' },
   { lang: 'ar', text: 'شغال 100%، شكرا جزيلا على المجهود' },
@@ -36,7 +39,31 @@ const FAKE_TEXTS = [
   { lang: 'ko', text: '잘 작동합니다. 공유해주셔서 감사합니다!' },
   { lang: 'en', text: 'Been looking for this everywhere. You are a lifesaver.' },
   { lang: 'ar', text: 'أسطورة، جاري التحميل والتجربة' },
-  { lang: 'darija', text: 'tbarkellah 3lik a sat, dima top' }
+  { lang: 'darija', text: 'tbarkellah 3lik a sat, dima top' },
+  { lang: 'en', text: 'Just tested it on Windows 11 23H2, running flawlessly without any crashes or bugs. Great packing job!' },
+  { lang: 'en', text: 'Installation took a bit longer than expected due to unpacking speed, but it completely works and performance is solid. Recommended.' },
+  { lang: 'en', text: 'My antivirus flagged one of the files as a false positive, added it to exclusions and everything is running smooth.' },
+  { lang: 'en', text: 'This is the most stable version I found online. Can confirm it works perfectly even on my low end machine.' },
+  { lang: 'en', text: 'I faced a missing DLL error initially, but reinstalling vcredist fixed it immediately. Thanks bro!' },
+  { lang: 'ar', text: 'شغال بدون أي مشاكل، سرعة التحميل خرافية.' },
+  { lang: 'ar', text: 'للي يواجه مشكلة في التثبيت، طفوا الانتي فايروس وتشتتغل معاكم طبيعي، تسلم ايدك على الرفع.' },
+  { lang: 'darija', text: 'khedama mzyan. bnesba l drari li makatbghich tkhdm lhm ytiro l windows defender rah kaymskheha' },
+  { lang: 'darija', text: 'wa narri tbarkellah 3lik akhouya, hadchi m9wd w madi ma fih tachi mochkil' },
+  { lang: 'es', text: 'Probado en Windows 10, y el rendimiento es brutal. Ningún tipo de malware, 100% limpio.' },
+  { lang: 'es', text: 'Tuve un pequeño error al inicio, pero ejecutarlo como administrador lo solucionó.' },
+  { lang: 'fr', text: 'Testé sur ma machine, aucune perte de FPS. Le crack est très propre, bravo.' },
+  { lang: 'fr', text: 'J\'ai dû mettre à jour mes pilotes graphiques mais après ça, que du bonheur.' },
+  { lang: 'ru', text: 'Репак шикарный, установился за 10 минут. Никаких лагов и вылетов нет.' },
+  { lang: 'ru', text: 'Была проблема с запуском, но нужно было просто обновить DirectX. Автору респект!' },
+  { lang: 'en', text: 'If anyone gets a black screen on startup, try unchecking the full screen optimization in properties.' },
+  { lang: 'en', text: 'Literally the only site I trust for these files. Always top notch quality and fast mirrors.' },
+  { lang: 'en', text: 'Was skeptical at first about the file size, but the compression is just insane. Fully verified it with CRC check.' },
+  { lang: 'ar', text: 'النسخة ذي فيها كل الإضافات صح ؟ لاني دورت عليها كثير.' },
+  { lang: 'ar', text: 'ما شاء الله عليك، اول مره اشوف موقع يوفر كذا روابط سريعه ومافيها إعلانات مزعجة.' },
+  { lang: 'darija', text: 'Chokran bzaaaf 3la lmjhod dyalek, ch7al w ana kan9leb 3liha mcrackya mzyan' },
+  { lang: 'pt', text: 'Funcionando perfeitamente irmão! Parabéns pelo trabalho excelente.' },
+  { lang: 'de', text: 'Läuft einwandfrei ohne jegliche Probleme. Vielen Dank für die Mühe!' },
+  { lang: 'tr', text: 'Sorunsuz çalışıyor, emekleriniz için çok teşekkür ederim.' }
 ];
 
 function seededRandom(seed: number) {
@@ -60,7 +87,7 @@ export const CommentsSection: React.FC<{ itemId: string }> = ({ itemId }) => {
     let hash = 0;
     for (let i = 0; i < itemId.length; i++) hash = itemId.charCodeAt(i) + ((hash << 5) - hash);
     
-    const numFakes = Math.floor(seededRandom(hash) * 4) + 2; // 2 to 5 comments
+    const numFakes = Math.floor(seededRandom(hash) * 12) + 5; // 5 to 16 comments
     const fakes: Comment[] = [];
     
     for (let i = 0; i < numFakes; i++) {

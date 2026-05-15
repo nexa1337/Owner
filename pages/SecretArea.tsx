@@ -7,7 +7,7 @@ import Icon from '../components/Icon';
 import { CommentsSection } from '../components/CommentsSection';
 
 // --- CONFIGURATION ---
-const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxbQKmoUUH4KzLmkAYZMGpoORPDTFYTzqCpnScEFIw5ngQ1cgzvFWU5fq0OXe2M5Ref/exec';
+const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzgf5ksoqfknXvJpAidk4NXoIlCdGbtp3UA1jxfHOacwCuAzigal8lsZ-XaLr0XJo4-/exec';
 const DISCORD_LINK = 'https://discord.gg/MgqvMyZv2b';
 const INSTAGRAM_LINK = 'https://instagram.com/nexa1337';
 const ITEMS_PER_PAGE = 12; // Show 12 items per page for laptop grid (4x3)
@@ -126,6 +126,15 @@ interface SteamAccount {
     username: string;
     password: string;
     games: string;
+    status: string;
+}
+
+interface MasterGiftAccount {
+    name: string;
+    url: string;
+    logo: string;
+    email: string; // or username
+    password: string;
     status: string;
 }
 
@@ -378,6 +387,188 @@ const SteamAccountsModal: React.FC<{ open: boolean; onClose: () => void; account
                 <div className="p-3 sm:p-4 bg-slate-100 dark:bg-[#171a21] border-t border-slate-200 dark:border-[#2a475e] text-center shrink-0">
                     <p className="text-[9px] sm:text-[10px] text-slate-500 dark:text-[#8f98a0]">
                         Please do not change passwords. These are community accounts.
+                    </p>
+                </div>
+            </motion.div>
+        </motion.div>
+    );
+};
+
+// MASTER GIFT MODAL
+const MasterGiftModal: React.FC<{ open: boolean; onClose: () => void; accounts: MasterGiftAccount[] }> = ({ open, onClose, accounts }) => {
+    const [copiedIndex, setCopiedIndex] = useState<{idx: number, type: 'email' | 'pass'} | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 4; // Show 4 items per page for Master Gift
+    
+    if (!open) return null;
+
+    const handleCopy = (text: string, idx: number, type: 'email' | 'pass') => {
+        navigator.clipboard.writeText(text);
+        setCopiedIndex({ idx, type });
+        setTimeout(() => setCopiedIndex(null), 2000);
+    };
+
+    const totalPages = Math.ceil(accounts.length / ITEMS_PER_PAGE);
+    const currentAccounts = accounts.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+    return (
+        <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[300] flex items-center justify-center bg-black/90 backdrop-blur-md p-2 sm:p-4"
+            onClick={onClose}
+        >
+            <motion.div 
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                className="bg-zinc-950 bg-white w-[95%] md:w-full max-w-4xl rounded-3xl overflow-hidden shadow-2xl border border-zinc-800 dark:border-zinc-800 border-slate-200 flex flex-col max-h-[85vh] sm:max-h-[85vh]"
+                onClick={e => e.stopPropagation()}
+            >
+                {/* Header */}
+                <div className="bg-gradient-to-r from-violet-600 to-indigo-600 p-4 sm:p-6 flex justify-between items-center relative overflow-hidden shrink-0">
+                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 pointer-events-none"></div>
+                    <div className="relative z-10">
+                        <h3 className="text-lg sm:text-2xl font-black uppercase tracking-wider text-white flex items-center gap-3">
+                            <Icon name="Gift" size={28} className="text-yellow-400 sm:w-8 sm:h-8 animate-pulse" /> 
+                            <span className="truncate">Master Gift</span>
+                        </h3>
+                        <p className="text-violet-100 text-[10px] sm:text-sm font-bold mt-1">
+                            Exclusive Premium Accounts • <span className="text-yellow-400">{accounts.length} Available</span>
+                        </p>
+                    </div>
+                    <button onClick={onClose} className="p-2 bg-black/20 hover:bg-black/40 rounded-full transition-colors text-white relative z-10 shrink-0 shadow">
+                        <Icon name="X" size={20} className="sm:w-6 sm:h-6" />
+                    </button>
+                </div>
+                
+                {/* List */}
+                <div className="p-4 sm:p-6 overflow-y-auto flex-1 custom-scrollbar bg-slate-50 dark:bg-zinc-950">
+                    {accounts.length === 0 ? (
+                        <div className="text-center py-10 flex flex-col items-center justify-center h-full">
+                            <div className="w-20 h-20 bg-zinc-900 rounded-full flex items-center justify-center mb-4 border border-zinc-800">
+                                <Icon name="Gift" size={40} className="text-zinc-600 opacity-50"/>
+                            </div>
+                            <h4 className="text-lg font-bold text-slate-800 dark:text-zinc-300 mb-2">No Gifts Right Now</h4>
+                            <p className="text-sm text-slate-500 dark:text-zinc-500">We continuously restock new premium accounts. Check back later!</p>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col h-full">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
+                                {currentAccounts.map((acc, index) => {
+                                    const actualIndex = (currentPage - 1) * ITEMS_PER_PAGE + index;
+                                    const statusRaw = acc.status?.toString().trim() || 'Online';
+                                    const isOffline = statusRaw.toLowerCase() === 'offline' || statusRaw.toLowerCase() === 'dead';
+                                    return (
+                                        <div key={actualIndex} className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-4 hover:border-violet-500/50 transition-all shadow-sm hover:shadow-violet-500/10 group relative flex flex-col h-full">
+                                            <div className="flex justify-between items-center mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    {acc.logo ? (
+                                                        <div className="w-10 h-10 rounded-xl overflow-hidden bg-zinc-800 shrink-0 border border-zinc-700 shadow flex items-center justify-center">
+                                                            <img src={acc.logo} alt={acc.name} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = '<span class="text-xs font-bold text-zinc-500 uppercase">' + acc.name.substring(0, 2) + '</span>'; }} />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-xl flex items-center justify-center text-white font-black text-xs shrink-0 shadow">
+                                                            {acc.name.substring(0, 2).toUpperCase()}
+                                                        </div>
+                                                    )}
+                                                    <div>
+                                                        <h4 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white capitalize tracking-tight line-clamp-1">{acc.name}</h4>
+                                                        {acc.url && <a href={acc.url} target="_blank" rel="noreferrer" className="text-[10px] text-violet-500 hover:text-violet-400 hover:underline flex items-center gap-1 font-semibold w-fit"><Icon name="ExternalLink" size={10} /> Visit Service</a>}
+                                                    </div>
+                                                </div>
+                                                {/* Status Badge */}
+                                                <div className={`text-[9px] sm:text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider border shrink-0 ${
+                                                    isOffline 
+                                                    ? 'bg-red-500/10 text-red-500 border-red-500/20' 
+                                                    : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                                                }`}>
+                                                    {statusRaw}
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-3 mt-auto">
+                                                <div className="space-y-1">
+                                                    <label className="text-[9px] font-black text-slate-500 dark:text-zinc-500 uppercase tracking-widest pl-1">Email / Username</label>
+                                                    <div className="flex items-center gap-2 bg-slate-50 dark:bg-zinc-950 p-2 rounded-lg border border-slate-200 dark:border-zinc-800 group-hover:border-violet-500/30 transition-colors">
+                                                        <Icon name="Mail" size={14} className="text-zinc-400 shrink-0 ml-1" />
+                                                        <span className="text-xs font-mono text-slate-900 dark:text-zinc-300 truncate flex-1 select-all">{acc.email}</span>
+                                                        <button 
+                                                            onClick={() => handleCopy(acc.email, actualIndex, 'email')}
+                                                            className="text-violet-500 hover:text-white hover:bg-violet-600 p-1.5 rounded transition-colors shrink-0 flex items-center justify-center w-7 h-7"
+                                                            title="Copy Email"
+                                                        >
+                                                            {copiedIndex?.idx === actualIndex && copiedIndex.type === 'email' ? <Icon name="Check" size={14} className="text-emerald-500" /> : <Icon name="Copy" size={14} />}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[9px] font-black text-slate-500 dark:text-zinc-500 uppercase tracking-widest pl-1">Password</label>
+                                                    <div className="flex items-center gap-2 bg-slate-50 dark:bg-zinc-950 p-2 rounded-lg border border-slate-200 dark:border-zinc-800 group-hover:border-violet-500/30 transition-colors">
+                                                        <Icon name="Key" size={14} className="text-zinc-400 shrink-0 ml-1" />
+                                                        <span className="text-xs font-mono text-slate-900 dark:text-zinc-300 truncate flex-1 select-all">{acc.password}</span>
+                                                        <button 
+                                                            onClick={() => handleCopy(acc.password, actualIndex, 'pass')}
+                                                            className="text-violet-500 hover:text-white hover:bg-violet-600 p-1.5 rounded transition-colors shrink-0 flex items-center justify-center w-7 h-7"
+                                                            title="Copy Password"
+                                                        >
+                                                            {copiedIndex?.idx === actualIndex && copiedIndex.type === 'pass' ? <Icon name="Check" size={14} className="text-emerald-500" /> : <Icon name="Copy" size={14} />}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            
+                            {/* Pagination Controls */}
+                            {totalPages > 1 && (
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t border-slate-200 dark:border-zinc-800">
+                                    <div className="text-xs text-slate-500 dark:text-zinc-400 font-semibold">
+                                        Showing <span className="font-bold text-violet-500">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> to <span className="font-bold text-violet-500">{Math.min(currentPage * ITEMS_PER_PAGE, accounts.length)}</span> of <span className="font-bold text-violet-500">{accounts.length}</span> gifts
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <button 
+                                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                            disabled={currentPage === 1}
+                                            className="px-4 py-2 rounded-lg bg-slate-100/50 dark:bg-zinc-900/50 hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 disabled:opacity-50 disabled:cursor-not-allowed border border-slate-200 dark:border-zinc-800 transition-colors text-xs font-bold uppercase tracking-wider flex items-center gap-2"
+                                        >
+                                            <Icon name="ChevronLeft" size={14} /> Prev
+                                        </button>
+                                        <div className="flex items-center gap-1">
+                                            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                                                <button
+                                                    key={page}
+                                                    onClick={() => setCurrentPage(page)}
+                                                    className={`w-8 h-8 rounded-lg text-xs font-bold transition-colors ${
+                                                        currentPage === page 
+                                                        ? 'bg-violet-600 text-white shadow shadow-violet-500/20' 
+                                                        : 'bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800'
+                                                    }`}
+                                                >
+                                                    {page}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <button 
+                                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                            disabled={currentPage === totalPages}
+                                            className="px-4 py-2 rounded-lg bg-slate-100/50 dark:bg-zinc-900/50 hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 disabled:opacity-50 disabled:cursor-not-allowed border border-slate-200 dark:border-zinc-800 transition-colors text-xs font-bold uppercase tracking-wider flex items-center gap-2"
+                                        >
+                                            Next <Icon name="ChevronRight" size={14} />
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+                
+                <div className="p-3 sm:p-4 bg-slate-100 dark:bg-zinc-900 border-t border-slate-200 dark:border-zinc-800 text-center shrink-0">
+                    <p className="text-[10px] text-slate-500 dark:text-zinc-400 font-semibold flex items-center justify-center gap-2">
+                        <Icon name="Info" size={12} className="text-violet-500" /> 
+                        These accounts belong to the community. Please don't change the passwords!
                     </p>
                 </div>
             </motion.div>
@@ -2124,6 +2315,10 @@ const SecretArea: React.FC = () => {
   
   // Steam Accounts Feature
   const [steamAccounts, setSteamAccounts] = useState<SteamAccount[]>([]);
+  
+  // Master Gift Feature
+  const [masterGifts, setMasterGifts] = useState<MasterGiftAccount[]>([]);
+  const [showMasterGiftModal, setShowMasterGiftModal] = useState(false);
 
   const intelItems = useMemo(() => {
     const items: IntelItem[] = [];
@@ -2496,6 +2691,27 @@ const SecretArea: React.FC = () => {
           setSteamAccounts([]);
       }
 
+      // Handle Master Gift Accounts
+      const masterGiftKey = Object.keys(data).find(k => k.toLowerCase().replace(/\s+/g, '') === 'mastergift');
+      if (masterGiftKey && Array.isArray(data[masterGiftKey])) {
+          setMasterGifts(data[masterGiftKey].map((raw: any) => {
+              const findByPrefix = (prefix: string) => {
+                  const key = Object.keys(raw).find(k => k.toLowerCase().trim().startsWith(prefix.toLowerCase()));
+                  return key ? raw[key] : undefined;
+              };
+              return {
+                  name: findByPrefix('name') || 'Unknown',
+                  url: findByPrefix('url') || findByPrefix('link') || '',
+                  logo: findByPrefix('logo') || findByPrefix('image') || '',
+                  email: findByPrefix('email') || findByPrefix('user') || '',
+                  password: findByPrefix('password') || findByPrefix('pass') || '',
+                  status: findByPrefix('status') || 'Online'
+              };
+          }));
+      } else {
+          setMasterGifts([]);
+      }
+
       const transformed: Record<string, ResourceItem[]> = { game: [], hypervisor: [], steamtools: [], architect: [], extra: [] };
       Object.keys(data).forEach(tabKey => {
         const normalizedKey = tabKey.toLowerCase();
@@ -2629,7 +2845,7 @@ const SecretArea: React.FC = () => {
                 trailer: getVal('trailer')
               }
             };
-          });
+          }).reverse();
         }
       });
       
@@ -3110,6 +3326,16 @@ const SecretArea: React.FC = () => {
         )}
       </AnimatePresence>
 
+      <AnimatePresence>
+        {showMasterGiftModal && (
+            <MasterGiftModal 
+                open={showMasterGiftModal} 
+                onClose={() => setShowMasterGiftModal(false)} 
+                accounts={masterGifts} 
+            />
+        )}
+      </AnimatePresence>
+
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-24 pb-40">
         
         <header className="flex flex-col xl:flex-row xl:items-end justify-between gap-8 mb-12">
@@ -3174,6 +3400,20 @@ const SecretArea: React.FC = () => {
                     <span className="absolute top-1.5 right-1.5 flex h-3 w-3 z-20">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                    </span>
+                )}
+            </button>
+            <button 
+                onClick={() => setShowMasterGiftModal(true)}
+                className="relative flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-violet-600 to-indigo-600 hover:to-indigo-500 text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-lg shadow-violet-500/20 active:scale-95 group border border-white/10"
+            >
+                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <Icon name="Gift" size={20} className="group-hover:animate-bounce text-yellow-400" /> 
+                <span className="relative z-10">Master Gift</span>
+                {masterGifts.length > 0 && (
+                    <span className="absolute top-1.5 right-1.5 flex h-3 w-3 z-20">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-400"></span>
                     </span>
                 )}
             </button>

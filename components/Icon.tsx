@@ -12,7 +12,7 @@ import {
   TbBrandLinkedin, TbBrandGithub, TbBrandX, TbBug, TbDatabase, TbRocket, TbHelp,
   TbBrandWindows, TbBrandXbox, TbBrandTiktok, TbSitemap, TbFaceId,
   TbUser, TbLock, TbKey, TbUsers, TbBrandDiscord, TbPin, TbAlertTriangle,
-  TbLoader, TbSend, TbCopy, TbGhost, TbShoppingCart, TbShieldExclamation,
+  TbLoader, TbSend, TbCopy, TbGhost, TbShoppingCart, TbShieldExclamation, TbGift,
   TbBold, TbItalic, TbList, TbCheckbox, TbGridDots, TbSearch, TbCalculator, TbBulb, TbSparkles, TbRefresh, TbInfoCircle,
   TbTarget, TbEye, TbBookmark, TbRadar, TbTerminal, TbBell, TbHistory, TbFilter, TbMenu2, TbDots
 } from 'react-icons/tb';
@@ -119,6 +119,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Send: TbSend,
   Copy: TbCopy,
   Ghost: TbGhost,
+  Gift: TbGift,
   
   // Hardware Aliases for System Requirements
   RAM: TbCpu,

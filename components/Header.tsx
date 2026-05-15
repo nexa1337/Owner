@@ -48,15 +48,15 @@ const Header: React.FC = () => {
               <Icon name="Wolf" size={32} className="relative z-10" />
             </motion.div>
             <div className="flex flex-col items-center">
-              <span className="font-bold text-lg tracking-tight text-slate-900 dark:text-white leading-none">
-                Anouar Marouan
-              </span>
-              <div className="flex items-center justify-center mt-1 gap-1">
-                 <span className="text-[10px] font-bold text-primary-500 uppercase tracking-[0.35em] leading-none animate-pulse">
+              <div className="flex items-center justify-center mb-1 gap-1">
+                 <span className="font-mono font-black text-sm sm:text-lg tracking-widest text-slate-900 dark:text-white leading-none">
                   N E X A 1337
                  </span>
-                 <Icon name="CheckCircle" size={12} className="text-blue-500" />
+                 <Icon name="CheckCircle" size={14} className="text-blue-500" />
               </div>
+              <span className="text-[8px] sm:text-[10px] font-bold text-primary-500 uppercase tracking-[0.3em] leading-none animate-pulse">
+                Internet For Everyone
+              </span>
             </div>
           </Link>
 
